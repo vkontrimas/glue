@@ -13,6 +13,7 @@ add_library(common INTERFACE)
 target_link_libraries(common INTERFACE glm glog)
 target_include_directories(common INTERFACE libcommon/include)
 target_compile_features(common INTERFACE cxx_std_20)
+target_compile_options(common INTERFACE -Wno-deprecated-volatile)
 
 # Gameplay logic
 # (for client / server)
@@ -28,6 +29,7 @@ target_compile_features(game PUBLIC cxx_std_20)
 add_executable(
     glue
     glue/src/main.cpp
+    glue/src/run.cpp
 )
 target_include_directories(glue PRIVATE glue/include)
 target_link_libraries(glue common game SDL2 glad imgui)
