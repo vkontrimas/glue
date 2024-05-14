@@ -17,7 +17,7 @@ target_compile_features(common INTERFACE cxx_std_20)
 # Gameplay logic
 # (for client / server)
 add_library(
-    game STATIC
+    game OBJECT
     libgame/src/placeholder.cpp
 )
 target_include_directories(game PUBLIC libgame/include)
