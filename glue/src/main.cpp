@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
   FLAGS_alsologtostderr = 1;
 
   const auto sdl_init_error = SDL_Init(SDL_INIT_VIDEO);
-  CHECK(sdl_init_error == 0) << "Failed to initialize SDL: " << SDL_GetError();
+  CHECK(!sdl_init_error) << SDL_GetError();
 
   run();
 
