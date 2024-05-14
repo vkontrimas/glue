@@ -9,10 +9,10 @@ add_subdirectory(third_party/imgui-v1.90-docking)
 add_subdirectory(third_party/glog-0.7.0)
 
 # Common typedefs, header-only utilities
-add_library(common STATIC libcommon/src/placeholder.cpp)
-target_link_libraries(common PUBLIC glm glog)
-target_include_directories(common PUBLIC libcommon/include)
-target_compile_features(common PUBLIC cxx_std_20)
+add_library(common INTERFACE)
+target_link_libraries(common INTERFACE glm glog)
+target_include_directories(common INTERFACE libcommon/include)
+target_compile_features(common INTERFACE cxx_std_20)
 
 # Gameplay logic
 # (for client / server)
