@@ -9,12 +9,7 @@ struct SDLWindowDeleter {
   void operator()(SDL_Window* window) { SDL_DestroyWindow(window); }
 };
 
-struct SDLGLContextDeleter {
-  void operator()(void* gl_context) { SDL_GL_DeleteContext(gl_context); }
-};
-}  // namespace
-
-void run() {
+auto create_window(const char* title, int width, int height) {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
   // max opengl version on mac os
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -30,14 +25,20 @@ void run() {
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
   std::unique_ptr<SDL_Window, SDLWindowDeleter> window{SDL_CreateWindow(
-      "Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720,
+      title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,
       SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL)};
-
   CHECK(window) << SDL_GetError();
-  SDL_ShowWindow(window.get());
 
+  return window;
+}
+
+struct SDLGLContextDeleter {
+  void operator()(void* gl_context) { SDL_GL_DeleteContext(gl_context); }
+};
+
+auto init_gl(SDL_Window* window) {
   std::unique_ptr<void, SDLGLContextDeleter> gl_context{
-      SDL_GL_CreateContext(window.get())};
+      SDL_GL_CreateContext(window)};
   CHECK(gl_context) << SDL_GetError();
 
   const auto gl_version =
@@ -45,6 +46,14 @@ void run() {
   CHECK(gl_version != 0) << "Failed to load GL";
   LOG(INFO) << "GL version " << GLAD_VERSION_MAJOR(gl_version) << "."
             << GLAD_VERSION_MINOR(gl_version);
+
+  return gl_context;
+}
+}  // namespace
+
+void run() {
+  auto window = create_window("Glue", 1280, 720);
+  auto gl_context = init_gl(window.get());
 
   bool is_running = true;
   while (is_running) {
