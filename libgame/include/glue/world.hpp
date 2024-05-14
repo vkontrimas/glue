@@ -5,5 +5,6 @@
 namespace glue {
 struct World {
   Plane ground;
+  Pose cube;
 };
 }  // namespace glue
