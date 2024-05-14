@@ -548,6 +548,7 @@ if (BUILD_TESTING)
   target_link_libraries (glog_test INTERFACE $<TARGET_OBJECTS:glog_internal> $<TARGET_PROPERTY:glog,LINK_LIBRARIES>)
   target_compile_definitions (glog_test INTERFACE GLOG_STATIC_DEFINE $<TARGET_PROPERTY:glog,COMPILE_DEFINITIONS>)
   target_include_directories (glog_test INTERFACE $<TARGET_PROPERTY:glog,INCLUDE_DIRECTORIES>)
+  target_compile_features(glog_test INTERFACE cxx_std_14)
 
   if (HAVE_LIB_GTEST)
     target_link_libraries (glog_test INTERFACE GTest::gtest)
