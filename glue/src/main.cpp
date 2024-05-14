@@ -2,13 +2,19 @@
 #include <glad/gl.h>
 #include <glog/logging.h>
 
-int main(int argc, char** argv) {
-  google::InitGoogleLogging(argv[0]);
-  FLAGS_alsologtostderr = 1;
+#include <memory>
 
-  const auto sdl_init_error = SDL_Init(SDL_INIT_VIDEO);
-  CHECK(sdl_init_error == 0) << "Failed to initialize SDL: " << SDL_GetError();
+namespace {
+struct SDLWindowDeleter {
+  void operator()(SDL_Window* window) { SDL_DestroyWindow(window); }
+};
 
+struct SDLGLContextDeleter {
+  void operator()(void* gl_context) { SDL_GL_DeleteContext(gl_context); }
+};
+}  // namespace
+
+void run() {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
   // max opengl version on mac os
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -23,13 +29,15 @@ int main(int argc, char** argv) {
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-  SDL_Window* window =
-      SDL_CreateWindow("Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                       1280, 720, SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL);
-  CHECK(window) << SDL_GetError();
-  SDL_ShowWindow(window);
+  std::unique_ptr<SDL_Window, SDLWindowDeleter> window{SDL_CreateWindow(
+      "Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720,
+      SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL)};
 
-  SDL_GLContext gl_context = SDL_GL_CreateContext(window);
+  CHECK(window) << SDL_GetError();
+  SDL_ShowWindow(window.get());
+
+  std::unique_ptr<void, SDLGLContextDeleter> gl_context{
+      SDL_GL_CreateContext(window.get())};
   CHECK(gl_context) << SDL_GetError();
 
   const auto gl_version =
@@ -53,11 +61,19 @@ int main(int argc, char** argv) {
     glClearColor(0.0f, 0.4f, 0.6f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    SDL_GL_SwapWindow(window);
+    SDL_GL_SwapWindow(window.get());
   }
+}
 
-  SDL_GL_DeleteContext(gl_context);
-  SDL_DestroyWindow(window);
+int main(int argc, char** argv) {
+  google::InitGoogleLogging(argv[0]);
+  FLAGS_alsologtostderr = 1;
+
+  const auto sdl_init_error = SDL_Init(SDL_INIT_VIDEO);
+  CHECK(sdl_init_error == 0) << "Failed to initialize SDL: " << SDL_GetError();
+
+  run();
+
   SDL_Quit();
   return 0;
 }
