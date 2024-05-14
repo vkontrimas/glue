@@ -2,7 +2,10 @@
 #include <glad/gl.h>
 #include <glog/logging.h>
 
+#include <glue/world.hpp>
 #include <memory>
+
+using namespace glue;
 
 namespace {
 struct SDLWindowDeleter {
@@ -54,6 +57,7 @@ auto init_gl(SDL_Window* window) {
 void run() {
   auto window = create_window("Glue", 1280, 720);
   auto gl_context = init_gl(window.get());
+  World world{};
 
   bool is_running = true;
   while (is_running) {
