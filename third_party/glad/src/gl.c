@@ -37,6 +37,7 @@ int GLAD_GL_VERSION_3_2 = 0;
 int GLAD_GL_VERSION_3_3 = 0;
 int GLAD_GL_VERSION_4_0 = 0;
 int GLAD_GL_VERSION_4_1 = 0;
+int GLAD_GL_EXT_texture_filter_anisotropic = 0;
 
 
 static void _pre_call_gl_callback_default(const char *name, GLADapiproc apiproc, int len_args, ...) {
@@ -4553,7 +4554,7 @@ static int glad_gl_find_extensions_gl(void) {
     char **exts_i = NULL;
     if (!glad_gl_get_extensions(&exts, &exts_i)) return 0;
 
-    GLAD_UNUSED(glad_gl_has_extension);
+    GLAD_GL_EXT_texture_filter_anisotropic = glad_gl_has_extension(exts, exts_i, "GL_EXT_texture_filter_anisotropic");
 
     glad_gl_free_extensions(exts_i);
 

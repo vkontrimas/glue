@@ -14,8 +14,8 @@ struct Pose {
       : position{position}, rotation{rotation} {}
 
   constexpr mat4 model_matrix() const noexcept {
-    return glm::toMat4(rotation) *
-           glm::translate(glm::identity<mat4>(), position);
+    return glm::translate(glm::identity<mat4>(), position) *
+           glm::toMat4(rotation);
   }
 };
 }  // namespace glue

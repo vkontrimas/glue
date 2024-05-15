@@ -49,6 +49,9 @@ inline auto init_gl(SDL_Window* window) {
   LOG(INFO) << "GL version " << GLAD_VERSION_MAJOR(gl_version) << "."
             << GLAD_VERSION_MINOR(gl_version);
 
+  CHECK(GLAD_GL_EXT_texture_filter_anisotropic)
+      << "anisotropic filtering unsupported :(";
+
   return gl_context;
 }
 }  // namespace glue

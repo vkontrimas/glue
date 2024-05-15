@@ -4,6 +4,7 @@
 #include <glue/world.hpp>
 
 #include "cube_renderer.hpp"
+#include "plane_renderer.hpp"
 #include "window.hpp"
 
 namespace glue {
@@ -12,10 +13,7 @@ void run() {
   auto gl_context = init_gl(window.get());
 
   World world{};
-
-  world.cube.position = vec3{5.0f, 0.0f, 0.0f};
-  world.cube.rotation =
-      glm::angleAxis(glm::radians(20.0f), vec3{1.0f, 0.0f, 0.0f});
+  world.ground.size = 400.0f;
 
   gfx::UniformBlock<uniforms::ViewProjection> view_projection_uniforms{
       0, {world.camera}};
@@ -23,6 +21,7 @@ void run() {
   gfx::UniformBlock<uniforms::Lighting> lighting_uniforms{1, {}};
 
   CubeRenderer cube_renderer{view_projection_uniforms, lighting_uniforms};
+  PlaneRenderer plane_renderer{view_projection_uniforms, lighting_uniforms};
 
   bool is_running = true;
   while (is_running) {
@@ -49,6 +48,7 @@ void run() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     cube_renderer.draw(world.cube);
+    plane_renderer.draw(world.ground);
 
     SDL_GL_SwapWindow(window.get());
   }

@@ -1,12 +1,15 @@
 #pragma once
 
+#include <glue/pose.hpp>
 #include <glue/typedefs.hpp>
 
 namespace glue {
 struct Plane {
-  vec3 normal;
-  f32 distance;
+  Pose pose;
+  f32 size;
 
-  constexpr Plane() noexcept : normal{0.0f, 1.0f, 0.0f}, distance{0.0f} {}
+  constexpr Plane() noexcept : pose{}, size{1.0f} {}
+  constexpr Plane(Pose pose) noexcept : pose{pose}, size{1.0f} {}
+  constexpr Plane(Pose pose, f32 size) noexcept : pose{pose}, size{size} {}
 };
 };  // namespace glue

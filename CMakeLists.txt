@@ -7,6 +7,7 @@ add_subdirectory(third_party/SDL2-2.28.5)
 add_subdirectory(third_party/glad)
 add_subdirectory(third_party/imgui-v1.90-docking)
 add_subdirectory(third_party/glog-0.7.0)
+add_subdirectory(third_party/stb_image-2.29)
 
 # Common typedefs, header-only utilities
 add_library(common INTERFACE)
@@ -32,9 +33,10 @@ add_executable(
     glue/src/run.cpp
     glue/src/gfx/shader.cpp
     glue/src/cube_renderer.cpp
+    glue/src/plane_renderer.cpp
 )
 target_include_directories(glue PRIVATE glue/include)
-target_link_libraries(glue common game SDL2 glad imgui)
+target_link_libraries(glue common game SDL2 glad imgui stb_image)
 target_compile_features(glue PUBLIC cxx_std_20)
 
 if (APPLE)

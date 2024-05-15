@@ -11,5 +11,13 @@ struct VertexArrayObjectDeleter {
 };
 }  // namespace detail
 
-using VertexArray = Resource<GLuint, detail::VertexArrayObjectDeleter>;
+struct VertexArray : public Resource<GLuint, detail::VertexArrayObjectDeleter> {
+  static VertexArray create() {
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    return {vao};
+  }
+
+  void bind() { glBindVertexArray(**this); }
+};
 }  // namespace glue::gfx
