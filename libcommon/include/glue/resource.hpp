@@ -40,12 +40,15 @@ class Resource : private detail::ResourceDeleterHolder<Deleter> {
  public:
   Resource() : detail::ResourceDeleterHolder<Deleter>{}, data_{} {}
 
-  Resource(T&& data)
+  template <typename cT>
+  Resource(cT&& data)
       : detail::ResourceDeleterHolder<Deleter>{},
-        data_{std::forward<T>(data)} {}
-  Resource(T&& data, Deleter&& deleter)
-      : detail::ResourceDeleterHolder<Deleter>{std::forward<Deleter>(deleter)},
-        data_{std::forward<T>(data)} {}
+        data_{std::forward<cT>(data)} {}
+
+  template <typename cT, typename cDeleter>
+  Resource(cT&& data, cDeleter&& deleter)
+      : detail::ResourceDeleterHolder<Deleter>{std::forward<cDeleter>(deleter)},
+        data_{std::forward<cT>(data)} {}
 
   ~Resource() { this->get_deleter()(data_); }
 
