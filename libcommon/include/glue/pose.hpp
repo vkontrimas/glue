@@ -12,5 +12,10 @@ struct Pose {
       : position{position}, rotation{glm::identity<quat>()} {}
   constexpr Pose(vec3 position, quat rotation) noexcept
       : position{position}, rotation{rotation} {}
+
+  constexpr mat4 model_matrix() const noexcept {
+    return glm::toMat4(rotation) *
+           glm::translate(glm::identity<mat4>(), position);
+  }
 };
 }  // namespace glue

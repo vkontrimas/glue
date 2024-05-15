@@ -13,6 +13,10 @@ void run() {
 
   World world{};
 
+  world.cube.position = vec3{5.0f, 0.0f, 0.0f};
+  world.cube.rotation =
+      glm::angleAxis(glm::radians(20.0f), vec3{1.0f, 0.0f, 0.0f});
+
   gfx::UniformBlock<uniforms::ViewProjection> view_projection_uniforms{
       0, {world.camera}};
 

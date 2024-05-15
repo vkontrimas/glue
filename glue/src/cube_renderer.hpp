@@ -19,6 +19,7 @@ class CubeRenderer {
   gfx::ElementBuffer<GLubyte> ebo_;
   gfx::VertexArray vao_;
   gfx::ShaderProgram shader_;
+  GLint model_uniform_;
 };
 
 }  // namespace glue

@@ -10,11 +10,13 @@ layout(std140) uniform view_projection_block {
   mat4 projection_matrix;
 };
 
+uniform mat4 model_matrix;
+
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 
 void main() {
-  gl_Position = projection_matrix * view_matrix * vec4(position, 1.0);
+  gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position, 1.0);
 }
 )shader";
 
@@ -35,6 +37,7 @@ CubeRenderer::CubeRenderer(
           gfx::ShaderProgram::from(gfx::Shader::vertex(kVertexShader),
                                    gfx::Shader::fragment(kFragmentShader))} {
   view_projection_block.connect(shader_, "view_projection_block");
+  model_uniform_ = shader_.uniform_location("model_matrix");
 
   {
     GLuint buffers[2];
@@ -130,6 +133,10 @@ CubeRenderer::CubeRenderer(
 
 void CubeRenderer::draw(const Pose& pose) {
   glUseProgram(*shader_);
+
+  const mat4 model_matrix = pose.model_matrix();
+  glUniformMatrix4fv(model_uniform_, 1, GL_FALSE, glm::value_ptr(model_matrix));
+
   glBindVertexArray(*vao_);
   glDrawElements(GL_TRIANGLES, 3 * 2 * 6, ebo_.Type, 0);
 }
