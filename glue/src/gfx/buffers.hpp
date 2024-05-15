@@ -28,6 +28,13 @@ struct TypedBufferObject : public BufferObject {
            usage == GL_STREAM_DRAW);
     glBufferData(Target, data.size_bytes(), data.data(), usage);
   }
+
+ protected:
+  static GLuint create_buffer() {
+    GLuint buffer;
+    glGenBuffers(1, &buffer);
+    return buffer;
+  }
 };
 
 template <typename T>
@@ -52,7 +59,9 @@ struct ElementTypeGLenum<GLuint> {
 
 // TODO(vkon): would be cool to enforce vertex layout + VAO + shader
 // compatibility via the type system!
-struct VertexBuffer : public detail::TypedBufferObject<GL_ARRAY_BUFFER> {};
+struct VertexBuffer : public detail::TypedBufferObject<GL_ARRAY_BUFFER> {
+  static VertexBuffer create() { return {create_buffer()}; }
+};
 
 template <typename T>
 concept ElementType = requires(T a) {
@@ -63,5 +72,18 @@ template <ElementType T>
 struct ElementBuffer
     : public detail::TypedBufferObject<GL_ELEMENT_ARRAY_BUFFER> {
   static constexpr GLenum Type = detail::ElementTypeGLenum<T>::value;
+
+  static ElementBuffer create() { return {create_buffer()}; }
+};
+
+template <typename T>
+struct UniformBuffer : public detail::TypedBufferObject<GL_UNIFORM_BUFFER> {
+  using ValueType = T;
+
+  void set(const T& value) {
+    glBufferData(Target, sizeof(value), &value, GL_DYNAMIC_DRAW);
+  }
+
+  static UniformBuffer<T> create() { return {create_buffer()}; }
 };
 }  // namespace glue::gfx

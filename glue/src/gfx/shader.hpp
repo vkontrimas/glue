@@ -37,6 +37,10 @@ struct ShaderProgram : public Resource<GLuint, detail::ProgramDeleter> {
     return glGetUniformLocation(**this, name);
   }
 
+  GLuint uniform_block_index(const char* name) {
+    return glGetUniformBlockIndex(**this, name);
+  }
+
  private:
   template <typename T>
   static ShaderProgram from_iter(T begin, T end) {
