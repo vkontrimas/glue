@@ -20,7 +20,9 @@ void run() {
   gfx::UniformBlock<uniforms::ViewProjection> view_projection_uniforms{
       0, {world.camera}};
 
-  CubeRenderer cube_renderer{view_projection_uniforms};
+  gfx::UniformBlock<uniforms::Lighting> lighting_uniforms{1, {}};
+
+  CubeRenderer cube_renderer{view_projection_uniforms, lighting_uniforms};
 
   bool is_running = true;
   while (is_running) {
@@ -40,7 +42,9 @@ void run() {
     }
 
     view_projection_uniforms.bind_for_shader();
+    lighting_uniforms.bind_for_shader();
 
+    glEnable(GL_DEPTH_TEST);
     glClearColor(0.0f, 0.4f, 0.6f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 

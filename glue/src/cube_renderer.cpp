@@ -15,7 +15,14 @@ uniform mat4 model_matrix;
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 
+out vec3 vert_normal;
+
 void main() {
+  // extract just the rotation and scale component
+  // model matrix must be orthogonal in the top-left 3x3
+  // ONLY UNIFORM SCALE IS ALLOWED!
+  mat3 model_rotation_scale = mat3(model_matrix);
+  vert_normal = model_rotation_scale * normal;
   gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position, 1.0);
 }
 )shader";
@@ -23,20 +30,30 @@ void main() {
 constexpr auto kFragmentShader = R"shader(
 #version 410 core
 
+layout(std140) uniform lighting_block {
+  vec4 ambient_light;
+  vec4 sun_direction;
+  vec4 sun_light;
+};
+
+in vec3 vert_normal;
+
 out vec4 frag_color;
 
 void main() {
-  frag_color = vec4(1.0);
+  frag_color = ambient_light + dot(vert_normal, sun_direction.xyz) * sun_light;
 }
 )shader";
 }  // namespace
 
 CubeRenderer::CubeRenderer(
-    const gfx::UniformBlock<uniforms::ViewProjection>& view_projection_block)
+    const gfx::UniformBlock<uniforms::ViewProjection>& view_projection_block,
+    const gfx::UniformBlock<uniforms::Lighting>& lighting_block)
     : shader_{
           gfx::ShaderProgram::from(gfx::Shader::vertex(kVertexShader),
                                    gfx::Shader::fragment(kFragmentShader))} {
   view_projection_block.connect(shader_, "view_projection_block");
+  lighting_block.connect(shader_, "lighting_block");
   model_uniform_ = shader_.uniform_location("model_matrix");
 
   {
