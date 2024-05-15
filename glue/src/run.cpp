@@ -4,13 +4,39 @@
 #include <glue/world.hpp>
 
 #include "gfx/buffers.hpp"
+#include "gfx/shader.hpp"
 #include "gfx/vertex_array.hpp"
 #include "window.hpp"
+
+namespace {
+constexpr auto kVertexShader = R"shader(
+#version 410 core
+
+layout(location = 0) in vec3 position;
+
+void main() {
+  gl_Position = vec4(position, 1.0);
+}
+)shader";
+
+constexpr auto kFragmentShader = R"shader(
+#version 410 core
+
+out vec4 frag_color;
+
+void main() {
+  frag_color = vec4(1.0);
+}
+)shader";
+}  // namespace
 
 namespace glue {
 class CubeRenderer {
  public:
-  CubeRenderer() {
+  CubeRenderer()
+      : shader_{
+            gfx::ShaderProgram::from(gfx::Shader::vertex(kVertexShader),
+                                     gfx::Shader::fragment(kFragmentShader))} {
     {
       GLuint buffers[2];
       glGenBuffers(2, buffers);
@@ -48,6 +74,7 @@ class CubeRenderer {
   gfx::VertexBuffer vbo_;
   gfx::ElementBuffer<GLubyte> ebo_;
   gfx::VertexArray vao_;
+  gfx::ShaderProgram shader_;
 };
 
 void run() {
@@ -56,7 +83,6 @@ void run() {
   World world{};
 
   CubeRenderer cube_renderer;
-  LOG(INFO) << sizeof(CubeRenderer);
 
   bool is_running = true;
   while (is_running) {

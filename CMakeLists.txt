@@ -30,6 +30,7 @@ add_executable(
     glue
     glue/src/main.cpp
     glue/src/run.cpp
+    glue/src/gfx/shader.cpp
 )
 target_include_directories(glue PRIVATE glue/include)
 target_link_libraries(glue common game SDL2 glad imgui)
