@@ -6,15 +6,15 @@
 namespace glue {
 struct World {
   Plane ground{{}, 3000.0f};
-  Pose cube;
+  Pose player;
   OrbitCamera camera;
 };
 
 inline World interpolated(const World& a, const World& b, float t) {
   World result = a;
-  result.cube.position = glm::mix(a.cube.position, b.cube.position, t);
-  result.cube.rotation = glm::slerp(a.cube.rotation, b.cube.rotation, t);
-  result.camera.target = result.cube.position;
+  result.player.position = glm::mix(a.player.position, b.player.position, t);
+  result.player.rotation = glm::slerp(a.player.rotation, b.player.rotation, t);
+  result.camera.target = result.player.position;
   return result;
 }
 }  // namespace glue

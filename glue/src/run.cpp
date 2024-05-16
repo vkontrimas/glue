@@ -31,7 +31,7 @@ class Renderer {
     glClearColor(0.0f, 0.4f, 0.6f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    cube_renderer_.draw(world.cube);
+    cube_renderer_.draw(world.player);
     plane_renderer_.draw(world.ground);
   }
 
@@ -48,10 +48,10 @@ void run() {
   auto gl_context = init_gl(window.get());
 
   World world{};
-  world.cube.position += vec3{0.0f, 50.0f, 0.0f};
-  world.cube.rotation =
+  world.player.position += vec3{0.0f, 50.0f, 0.0f};
+  world.player.rotation =
       quat{vec3{glm::radians(40.0f), glm::radians(20.0f), 0.0f}};
-  world.camera.target = world.cube.position;
+  world.camera.target = world.player.position;
 
   World previous_world = world;
 
@@ -90,7 +90,7 @@ void run() {
       }
     }
 
-    world.camera.target = world.cube.position;
+    world.camera.target = world.player.position;
     physics.update(frame_delta_time, previous_world, world);
 
     const auto t = physics.remaining_simulation_time() / physics.timestep();

@@ -182,19 +182,19 @@ class PhysicsImpl {
 
     body_interface.AddBody(ground->GetID(), JPH::EActivation::DontActivate);
 
-    // ADD CUBE
-    JPH::BoxShapeSettings cube_shape_settings{JPH::Vec3{1.0f, 1.0f, 1.0f}};
-    auto cube_shape_result = cube_shape_settings.Create();
-    CHECK(!cube_shape_result.HasError());
+    // ADD PLAYER CUBE
+    JPH::BoxShapeSettings player_shape_settings{JPH::Vec3{1.0f, 1.0f, 1.0f}};
+    auto player_shape_result = player_shape_settings.Create();
+    CHECK(!player_shape_result.HasError());
 
-    JPH::BodyCreationSettings cube_settings{
-        cube_shape_result.Get(), glm(world.cube.position),
-        glm(world.cube.rotation), JPH::EMotionType::Dynamic, Layers::Moving};
-    JPH::Body* cube = body_interface.CreateBody(cube_settings);
-    CHECK_NOTNULL(cube);
+    JPH::BodyCreationSettings player_settings{
+        player_shape_result.Get(), glm(world.player.position),
+        glm(world.player.rotation), JPH::EMotionType::Dynamic, Layers::Moving};
+    JPH::Body* player = body_interface.CreateBody(player_settings);
+    CHECK_NOTNULL(player);
 
-    body_interface.AddBody(cube->GetID(), JPH::EActivation::Activate);
-    cube_id_ = cube->GetID();
+    body_interface.AddBody(player->GetID(), JPH::EActivation::Activate);
+    player_id_ = player->GetID();
   }
 
   void step(float timestep) {
@@ -204,13 +204,14 @@ class PhysicsImpl {
   void update_world_state(World& world) {
     auto& body_interface = physics_system_.GetBodyInterface();
 
-    JPH::Vec3 cube_position = body_interface.GetCenterOfMassPosition(cube_id_);
-    world.cube.position = {cube_position.GetX(), cube_position.GetY(),
-                           cube_position.GetZ()};
+    JPH::Vec3 player_position =
+        body_interface.GetCenterOfMassPosition(player_id_);
+    world.player.position = {player_position.GetX(), player_position.GetY(),
+                             player_position.GetZ()};
 
-    JPH::Quat cube_rotation = body_interface.GetRotation(cube_id_);
-    world.cube.rotation = {cube_rotation.GetW(), cube_rotation.GetX(),
-                           cube_rotation.GetY(), cube_rotation.GetZ()};
+    JPH::Quat player_rotation = body_interface.GetRotation(player_id_);
+    world.player.rotation = {player_rotation.GetW(), player_rotation.GetX(),
+                             player_rotation.GetY(), player_rotation.GetZ()};
   }
 
  private:
@@ -221,7 +222,7 @@ class PhysicsImpl {
   BroadPhaseLayerInterfaceImpl broad_phase_layer_interface_;
   ObjectVsBroadPhaseLayerFilterImpl object_vs_broad_phase_layer_filter_;
   JPH::PhysicsSystem physics_system_;
-  JPH::BodyID cube_id_;
+  JPH::BodyID player_id_;
 };
 
 Physics::Physics() {
@@ -240,7 +241,8 @@ void Physics::setup_static_objects(const World& world) {
   impl_->setup_static_objects(world);
 }
 
-void Physics::update(float frame_delta_time, World& previous_world, World& world) {
+void Physics::update(float frame_delta_time, World& previous_world,
+                     World& world) {
   remaining_simulation_time_ += frame_delta_time;
   while (remaining_simulation_time_ >= timestep()) {
     using std::swap;
