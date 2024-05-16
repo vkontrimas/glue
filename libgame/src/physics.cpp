@@ -197,34 +197,9 @@ class PhysicsImpl {
     cube_id_ = cube->GetID();
   }
 
-  void update(float frame_delta_time, World& world) {
-    remaining_simulation_time_ += frame_delta_time;
-
-    int steps_this_frame = 0;
-    constexpr float kTimestep = 1.0f / 60.0f;
-    while (remaining_simulation_time_ > kTimestep) {
-      constexpr i32 kCollisionSteps = 1;
-      physics_system_.Update(kTimestep, kCollisionSteps, &temp_allocator_,
-                             &job_system_);
-      remaining_simulation_time_ -= kTimestep;
-      ++steps_this_frame;
-    }
-
-    if (steps_this_frame > 0) {
-      update_world_state(world);
-    }
+  void step(float timestep) {
+    physics_system_.Update(timestep, 1, &temp_allocator_, &job_system_);
   }
-
- private:
-  JPHFactorySingletonInstance factory_singleton_instance_;
-  JPH::TempAllocatorImpl temp_allocator_;
-  JPH::JobSystemThreadPool job_system_;
-  ObjectLayerPairFilterImpl object_layer_pair_filter_;
-  BroadPhaseLayerInterfaceImpl broad_phase_layer_interface_;
-  ObjectVsBroadPhaseLayerFilterImpl object_vs_broad_phase_layer_filter_;
-  JPH::PhysicsSystem physics_system_;
-  JPH::BodyID cube_id_;
-  float remaining_simulation_time_ = 0.0f;
 
   void update_world_state(World& world) {
     auto& body_interface = physics_system_.GetBodyInterface();
@@ -237,6 +212,16 @@ class PhysicsImpl {
     world.cube.rotation = {cube_rotation.GetW(), cube_rotation.GetX(),
                            cube_rotation.GetY(), cube_rotation.GetZ()};
   }
+
+ private:
+  JPHFactorySingletonInstance factory_singleton_instance_;
+  JPH::TempAllocatorImpl temp_allocator_;
+  JPH::JobSystemThreadPool job_system_;
+  ObjectLayerPairFilterImpl object_layer_pair_filter_;
+  BroadPhaseLayerInterfaceImpl broad_phase_layer_interface_;
+  ObjectVsBroadPhaseLayerFilterImpl object_vs_broad_phase_layer_filter_;
+  JPH::PhysicsSystem physics_system_;
+  JPH::BodyID cube_id_;
 };
 
 Physics::Physics() {
@@ -256,6 +241,17 @@ void Physics::setup_static_objects(const World& world) {
 }
 
 void Physics::update(float frame_delta_time, World& world) {
-  impl_->update(frame_delta_time, world);
+  constexpr float kTimestep = 1.0f / 60.0f;
+  remaining_simulation_time_ += frame_delta_time;
+  int steps_this_frame = 0;
+  while (remaining_simulation_time_ >= kTimestep) {
+    remaining_simulation_time_ -= kTimestep;
+    ++steps_this_frame;
+    impl_->step(kTimestep);
+  }
+
+  if (steps_this_frame > 0) {
+    impl_->update_world_state(world);
+  }
 }
 }  // namespace glue

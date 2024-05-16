@@ -16,5 +16,6 @@ class Physics {
 
  private:
   std::unique_ptr<PhysicsImpl> impl_;
+  float remaining_simulation_time_ = 0.0f;
 };
 }  // namespace glue
