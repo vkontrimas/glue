@@ -14,6 +14,7 @@ void run() {
 
   World world{};
   world.ground.size = 400.0f;
+  world.cube.position += vec3{0.0f, 0.5f, 0.0f};
 
   gfx::UniformBlock<uniforms::ViewProjection> view_projection_uniforms{
       0, {world.camera}};
