@@ -28,7 +28,7 @@ inline auto create_window(const char* title, int width, int height) {
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
   std::unique_ptr<SDL_Window, SDLWindowDeleter> window{SDL_CreateWindow(
       title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,
-      SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL)};
+      SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN)};
   CHECK(window) << SDL_GetError();
 
   return window;

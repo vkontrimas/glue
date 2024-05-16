@@ -8,6 +8,40 @@
 #include "window.hpp"
 
 namespace glue {
+namespace {
+class Renderer {
+ public:
+  Renderer()
+      : view_projection_uniforms_{0, {}},
+        lighting_uniforms_{1, {}},
+        cube_renderer_{view_projection_uniforms_, lighting_uniforms_},
+        plane_renderer_{view_projection_uniforms_, lighting_uniforms_} {}
+
+  void draw(const World& world) {
+    {
+      view_projection_uniforms_.bind_for_write();
+      view_projection_uniforms_.set({world.camera});
+    }
+
+    view_projection_uniforms_.bind_for_shader();
+    lighting_uniforms_.bind_for_shader();
+
+    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.0f, 0.4f, 0.6f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    cube_renderer_.draw(world.cube);
+    plane_renderer_.draw(world.ground);
+  }
+
+ private:
+  gfx::UniformBlock<uniforms::ViewProjection> view_projection_uniforms_;
+  gfx::UniformBlock<uniforms::Lighting> lighting_uniforms_;
+  CubeRenderer cube_renderer_;
+  PlaneRenderer plane_renderer_;
+};
+}  // namespace
+
 void run() {
   auto window = create_window("Glue", 1280, 720);
   auto gl_context = init_gl(window.get());
@@ -15,14 +49,16 @@ void run() {
   World world{};
   world.ground.size = 400.0f;
   world.cube.position += vec3{0.0f, 0.5f, 0.0f};
+  world.camera.target = world.cube.position;
 
-  gfx::UniformBlock<uniforms::ViewProjection> view_projection_uniforms{
-      0, {world.camera}};
+  Renderer renderer;
 
-  gfx::UniformBlock<uniforms::Lighting> lighting_uniforms{1, {}};
-
-  CubeRenderer cube_renderer{view_projection_uniforms, lighting_uniforms};
-  PlaneRenderer plane_renderer{view_projection_uniforms, lighting_uniforms};
+  {
+    // draw the world once before showing the window
+    renderer.draw(world);
+    SDL_GL_SwapWindow(window.get());
+    SDL_ShowWindow(window.get());
+  }
 
   bool is_running = true;
   while (is_running) {
@@ -38,20 +74,7 @@ void run() {
 
     world.camera.target = world.cube.position;
 
-    {
-      view_projection_uniforms.bind_for_write();
-      view_projection_uniforms.set({world.camera});
-    }
-
-    view_projection_uniforms.bind_for_shader();
-    lighting_uniforms.bind_for_shader();
-
-    glEnable(GL_DEPTH_TEST);
-    glClearColor(0.0f, 0.4f, 0.6f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-    cube_renderer.draw(world.cube);
-    plane_renderer.draw(world.ground);
+    renderer.draw(world);
 
     SDL_GL_SwapWindow(window.get());
   }
