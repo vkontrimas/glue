@@ -5,6 +5,7 @@
 #include <glue/world.hpp>
 
 #include "cube_renderer.hpp"
+#include "imgui/imgui_context.hpp"
 #include "plane_renderer.hpp"
 #include "window.hpp"
 
@@ -44,8 +45,10 @@ class Renderer {
 }  // namespace
 
 void run() {
+  bool window_shown = false;
   auto window = create_window("Glue", 1280, 720);
   auto gl_context = init_gl(window.get());
+  glue::imgui::ImGuiContext imgui{window.get(), gl_context.get()};
 
   World world{};
   world.player.position += vec3{0.0f, 50.0f, 0.0f};
@@ -62,14 +65,6 @@ void run() {
 
   u64 previous_time = 0;
   u64 now = SDL_GetPerformanceCounter();
-
-  {
-    // draw the world once before showing the window
-    renderer.draw(previous_world);
-    SDL_GL_SwapWindow(window.get());
-    SDL_ShowWindow(window.get());
-  }
-
   SDL_GL_SetSwapInterval(1);
 
   bool is_running = true;
@@ -82,6 +77,8 @@ void run() {
 
     SDL_Event event{};
     while (SDL_PollEvent(&event)) {
+      imgui.process_event(event);
+
       if (event.type == SDL_QUIT) {
         is_running = false;
       } else if (event.type == SDL_KEYDOWN &&
@@ -90,13 +87,22 @@ void run() {
       }
     }
 
+    imgui.start_new_frame();
+
+    ImGui::ShowDemoWindow();
+
     world.camera.target = world.player.position;
     physics.update(frame_delta_time, previous_world, world);
 
     const auto t = physics.remaining_simulation_time() / physics.timestep();
     renderer.draw(interpolated(previous_world, world, t));
+    imgui.draw();
 
     SDL_GL_SwapWindow(window.get());
+    if (!window_shown) {
+      window_shown = true;
+      SDL_ShowWindow(window.get());
+    }
   }
 }
 }  // namespace glue
