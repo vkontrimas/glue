@@ -36,6 +36,8 @@ void run() {
       }
     }
 
+    world.camera.target = world.cube.position;
+
     {
       view_projection_uniforms.bind_for_write();
       view_projection_uniforms.set({world.camera});
