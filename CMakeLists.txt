@@ -8,6 +8,7 @@ add_subdirectory(third_party/glad)
 add_subdirectory(third_party/imgui-v1.90-docking)
 add_subdirectory(third_party/glog-0.7.0)
 add_subdirectory(third_party/stb_image-2.29)
+add_subdirectory(third_party/JoltPhysics-5.0.0/Build)
 
 # Common typedefs, header-only utilities
 add_library(common INTERFACE)
@@ -23,7 +24,7 @@ add_library(
     libgame/src/placeholder.cpp
 )
 target_include_directories(game PUBLIC libgame/include)
-target_link_libraries(game PUBLIC common)
+target_link_libraries(game PUBLIC common Jolt)
 target_compile_features(game PUBLIC cxx_std_20)
 
 # Client
