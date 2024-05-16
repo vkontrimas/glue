@@ -1,6 +1,7 @@
 #include <SDL.h>
 
 #include <array>
+#include <glue/physics.hpp>
 #include <glue/world.hpp>
 
 #include "cube_renderer.hpp"
@@ -47,11 +48,18 @@ void run() {
   auto gl_context = init_gl(window.get());
 
   World world{};
-  world.ground.size = 400.0f;
-  world.cube.position += vec3{0.0f, 0.5f, 0.0f};
+  world.cube.position += vec3{0.0f, 10.0f, 0.0f};
+  world.cube.rotation = glm::normalize(
+      glm::angleAxis(35.0f, glm::normalize(vec3{1.0f, 0.5f, 2.0f})));
   world.camera.target = world.cube.position;
 
+  Physics physics;
+  physics.setup_static_objects(world);
+
   Renderer renderer;
+
+  u64 previous_time = 0;
+  u64 now = SDL_GetPerformanceCounter();
 
   {
     // draw the world once before showing the window
@@ -60,8 +68,18 @@ void run() {
     SDL_ShowWindow(window.get());
   }
 
+  SDL_GL_SetSwapInterval(1);
+
   bool is_running = true;
   while (is_running) {
+    previous_time = now;
+    now = SDL_GetPerformanceCounter();
+
+    float frame_delta_time = static_cast<float>(now - previous_time) /
+                             static_cast<float>(SDL_GetPerformanceFrequency());
+    LOG_EVERY_T(INFO, 0.5) << "dt: " << frame_delta_time * 1000.0f << "ms ("
+                           << std::floor(1.0f / frame_delta_time) << " FPS)";
+
     SDL_Event event{};
     while (SDL_PollEvent(&event)) {
       if (event.type == SDL_QUIT) {
@@ -73,6 +91,8 @@ void run() {
     }
 
     world.camera.target = world.cube.position;
+
+    physics.update(frame_delta_time, world);
 
     renderer.draw(world);
 

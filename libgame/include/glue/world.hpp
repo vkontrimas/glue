@@ -5,7 +5,7 @@
 
 namespace glue {
 struct World {
-  Plane ground;
+  const Plane ground{{}, 3000.0f};
   Pose cube;
   OrbitCamera camera;
 };

@@ -21,7 +21,7 @@ target_compile_options(common INTERFACE -Wno-deprecated-volatile)
 # (for client / server)
 add_library(
     game OBJECT
-    libgame/src/placeholder.cpp
+    libgame/src/physics.cpp
 )
 target_include_directories(game PUBLIC libgame/include)
 target_link_libraries(game PUBLIC common Jolt)
