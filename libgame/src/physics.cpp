@@ -240,17 +240,14 @@ void Physics::setup_static_objects(const World& world) {
   impl_->setup_static_objects(world);
 }
 
-void Physics::update(float frame_delta_time, World& world) {
-  constexpr float kTimestep = 1.0f / 60.0f;
+void Physics::update(float frame_delta_time, World& previous_world, World& world) {
   remaining_simulation_time_ += frame_delta_time;
-  int steps_this_frame = 0;
-  while (remaining_simulation_time_ >= kTimestep) {
-    remaining_simulation_time_ -= kTimestep;
-    ++steps_this_frame;
-    impl_->step(kTimestep);
-  }
+  while (remaining_simulation_time_ >= timestep()) {
+    using std::swap;
+    swap(previous_world, world);
 
-  if (steps_this_frame > 0) {
+    remaining_simulation_time_ -= timestep();
+    impl_->step(timestep());
     impl_->update_world_state(world);
   }
 }

@@ -53,6 +53,8 @@ void run() {
       quat{vec3{glm::radians(40.0f), glm::radians(20.0f), 0.0f}};
   world.camera.target = world.cube.position;
 
+  World previous_world = world;
+
   Physics physics;
   physics.setup_static_objects(world);
 
@@ -63,7 +65,7 @@ void run() {
 
   {
     // draw the world once before showing the window
-    renderer.draw(world);
+    renderer.draw(previous_world);
     SDL_GL_SwapWindow(window.get());
     SDL_ShowWindow(window.get());
   }
@@ -77,8 +79,6 @@ void run() {
 
     float frame_delta_time = static_cast<float>(now - previous_time) /
                              static_cast<float>(SDL_GetPerformanceFrequency());
-    LOG_EVERY_T(INFO, 0.5) << "dt: " << frame_delta_time * 1000.0f << "ms ("
-                           << std::floor(1.0f / frame_delta_time) << " FPS)";
 
     SDL_Event event{};
     while (SDL_PollEvent(&event)) {
@@ -91,10 +91,10 @@ void run() {
     }
 
     world.camera.target = world.cube.position;
+    physics.update(frame_delta_time, previous_world, world);
 
-    physics.update(frame_delta_time, world);
-
-    renderer.draw(world);
+    const auto t = physics.remaining_simulation_time() / physics.timestep();
+    renderer.draw(interpolated(previous_world, world, t));
 
     SDL_GL_SwapWindow(window.get());
   }
