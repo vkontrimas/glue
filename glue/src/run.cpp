@@ -48,9 +48,9 @@ void run() {
   auto gl_context = init_gl(window.get());
 
   World world{};
-  world.cube.position += vec3{0.0f, 10.0f, 0.0f};
-  world.cube.rotation = glm::normalize(
-      glm::angleAxis(35.0f, glm::normalize(vec3{1.0f, 0.5f, 2.0f})));
+  world.cube.position += vec3{0.0f, 50.0f, 0.0f};
+  world.cube.rotation =
+      quat{vec3{glm::radians(40.0f), glm::radians(20.0f), 0.0f}};
   world.camera.target = world.cube.position;
 
   Physics physics;

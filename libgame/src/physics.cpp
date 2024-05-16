@@ -148,7 +148,7 @@ struct ObjectVsBroadPhaseLayerFilterImpl
 
 JPH::Vec3 glm(vec3 pos) noexcept { return {pos.x, pos.y, pos.z}; }
 
-JPH::Quat glm(quat o) noexcept { return {o.x, o.y, o.z, o.w}; }
+JPH::Quat glm(quat o) noexcept { return JPH::Quat{o.x, o.y, o.z, o.w}; }
 }  // namespace
 
 class PhysicsImpl {
@@ -234,8 +234,8 @@ class PhysicsImpl {
                            cube_position.GetZ()};
 
     JPH::Quat cube_rotation = body_interface.GetRotation(cube_id_);
-    world.cube.rotation = {cube_rotation.GetX(), cube_rotation.GetY(),
-                           cube_rotation.GetZ(), cube_rotation.GetW()};
+    world.cube.rotation = {cube_rotation.GetW(), cube_rotation.GetX(),
+                           cube_rotation.GetY(), cube_rotation.GetZ()};
   }
 };
 
