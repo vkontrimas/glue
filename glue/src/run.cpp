@@ -70,8 +70,6 @@ void place_cubes(int rows, float cube_width, JoltPhysics& physics,
 
 class MoveInput {
  public:
-  explicit MoveInput(f32 torque) : torque_{torque} {}
-
   void process_event(SDL_Event& event) {
     if (event.type != SDL_KEYUP && event.type != SDL_KEYDOWN) {
       return;
@@ -128,14 +126,11 @@ class MoveInput {
     return glm::cross(vec3{0.0f, 1.0f, 0.0f}, movement_direction(camera_yaw));
   }
 
-  f32 torque() const { return has_input() ? torque_ : 0.0f; }
-
  private:
   bool input_forward_ = false;
   bool input_back_ = false;
   bool input_left_ = false;
   bool input_right_ = false;
-  f32 torque_;
 };
 }  // namespace
 
@@ -161,7 +156,9 @@ void run() {
                              kPlayerCubeRadius, true);
     camera.target = player_start_position;
   }
-  MoveInput player_move_input{4000.0f};
+  MoveInput player_move_input;
+  constexpr int kPlayerMaxJumps = 5;
+  int player_jump_count = 0;
 
   std::vector<ObjectID> cube_ids;
   constexpr float kCubeRadius = 0.2f;
@@ -199,7 +196,10 @@ void run() {
         is_running = false;
       } else if (event.type == SDL_KEYUP &&
                  event.key.keysym.sym == SDLK_SPACE) {
-        physics.add_impulse(player_id, vec3{0.0f, 5000.0f, 0.0f});
+        if (player_jump_count < kPlayerMaxJumps) {
+          physics.add_impulse(player_id, vec3{0.0f, 5000.0f, 0.0f});
+          player_jump_count++;
+        }
       }
     }
 
@@ -241,7 +241,7 @@ void run() {
       if (player_move_input.has_input()) {
         physics.add_torque(
             player_id, player_move_input.torque_axis(camera.position_rel.yaw),
-            player_move_input.torque());
+            5000.0f);
       }
     });
 
