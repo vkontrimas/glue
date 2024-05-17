@@ -55,7 +55,7 @@ void run() {
   glue::imgui::ImGuiContext imgui{window.get(), gl_context.get()};
 
   World world{};
-  world.player.position += vec3{0.0f, 50.0f, 0.0f};
+  world.player.position += vec3{0.0f, 4.0f, 0.0f};
   world.player.rotation =
       quat{vec3{glm::radians(40.0f), glm::radians(20.0f), 0.0f}};
   world.camera.target = world.player.position;
