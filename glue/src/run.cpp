@@ -63,8 +63,13 @@ void run() {
 
   Renderer renderer;
 
+  u64 last_frame = 0;
   u64 previous_time = 0;
   u64 now = SDL_GetPerformanceCounter();
+
+  bool show_imgui_demo = false;
+
+  bool vsync = true;
   SDL_GL_SetSwapInterval(1);
 
   bool is_running = true;
@@ -89,7 +94,36 @@ void run() {
 
     imgui.start_new_frame();
 
-    ImGui::ShowDemoWindow();
+    ImGui::SetNextWindowSize({300, 100}, ImGuiCond_Always);
+    ImGui::SetNextWindowPos({0, 0}, ImGuiCond_Always);
+    if (ImGui::Begin("FPS", nullptr,
+                     ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove |
+                         ImGuiWindowFlags_NoCollapse |
+                         ImGuiWindowFlags_NoDecoration)) {
+      if (ImGui::TreeNode("Settings", "%03.3f ms (%3.0f FPS)",
+                          frame_delta_time * 1000.0f,
+                          1.0f / frame_delta_time)) {
+        if (ImGui::Checkbox("V-sync", &vsync)) {
+          if (vsync) {
+            SDL_GL_SetSwapInterval(1);
+          } else {
+            SDL_GL_SetSwapInterval(0);
+          }
+        }
+
+        ImGui::Separator();
+        ImGui::Checkbox("ImGui demo window", &show_imgui_demo);
+
+        ImGui::TreePop();
+        ImGui::Spacing();
+      }
+
+      ImGui::End();
+    }
+
+    if (show_imgui_demo) {
+      ImGui::ShowDemoWindow(&show_imgui_demo);
+    }
 
     world.camera.target = world.player.position;
     physics.update(frame_delta_time, previous_world, world);
