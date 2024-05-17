@@ -10,14 +10,14 @@ namespace glue {
 struct World {
   Plane ground{{}, 3000.0f};
   Pose player;
-  float player_width = 1.25f;
+  float player_width = 0.5f;  // width = extends, TODO: rename
   std::vector<Pose> cubes;
-  float cubes_width = 0.5f;
+  float cubes_width = 0.2f;
   OrbitCamera camera;
 
   void place_cubes(int rows) {
     cubes.reserve(rows * rows);
-    float spacing = cubes_width * 2.25f;
+    float spacing = cubes_width * 6.0f;
     vec3 start =
         -1 * spacing * 0.5f * vec3{rows, 0, rows} + vec3{0, cubes_width, 0};
     for (int i = 0; i < rows; ++i) {

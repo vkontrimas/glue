@@ -219,7 +219,7 @@ class PhysicsImpl {
 
   void step(float timestep) {
     auto& body_interface = physics_system_.GetBodyInterface();
-    body_interface.AddTorque(player_id_, {150000.0f, 0.0f, 0.0f});
+    body_interface.AddTorque(player_id_, {4000.0f, 0.0f, 0.0f});
 
     physics_system_.Update(timestep, 1, &temp_allocator_, &job_system_);
   }
