@@ -196,9 +196,29 @@ class PhysicsImpl {
 
     body_interface.AddBody(player->GetID(), JPH::EActivation::Activate);
     player_id_ = player->GetID();
+
+    // ADD THE OTHER CUBES
+    for (const auto& cube_pose : world.cubes) {
+      JPH::BoxShapeSettings cube_shape_settings{JPH::Vec3{0.2f, 0.2f, 0.2f}};
+      auto cube_shape_result = cube_shape_settings.Create();
+      CHECK(!cube_shape_result.HasError());
+
+      JPH::BodyCreationSettings cube_settings{
+          cube_shape_result.Get(), glm(cube_pose.position),
+          glm(cube_pose.rotation), JPH::EMotionType::Dynamic, Layers::Moving};
+      JPH::Body* cube = body_interface.CreateBody(cube_settings);
+      CHECK_NOTNULL(cube);
+
+      body_interface.AddBody(cube->GetID(), JPH::EActivation::Activate);
+
+      cube_ids_.push_back(cube->GetID());
+    }
   }
 
   void step(float timestep) {
+    auto& body_interface = physics_system_.GetBodyInterface();
+    body_interface.AddTorque(player_id_, {50000.0f, 0.0f, 0.0f});
+
     physics_system_.Update(timestep, 1, &temp_allocator_, &job_system_);
   }
 
@@ -213,6 +233,19 @@ class PhysicsImpl {
     JPH::Quat player_rotation = body_interface.GetRotation(player_id_);
     world.player.rotation = {player_rotation.GetW(), player_rotation.GetX(),
                              player_rotation.GetY(), player_rotation.GetZ()};
+
+    CHECK(world.cubes.size() == cube_ids_.size())
+        << "cube vector sizes must match";
+    for (int i = 0; i < cube_ids_.size(); ++i) {
+      JPH::Vec3 cube_position =
+          body_interface.GetCenterOfMassPosition(cube_ids_[i]);
+      world.cubes[i].position = {cube_position.GetX(), cube_position.GetY(),
+                                 cube_position.GetZ()};
+
+      JPH::Quat cube_rotation = body_interface.GetRotation(cube_ids_[i]);
+      world.cubes[i].rotation = {cube_rotation.GetW(), cube_rotation.GetX(),
+                                 cube_rotation.GetY(), cube_rotation.GetZ()};
+    }
   }
 
  private:
@@ -224,6 +257,7 @@ class PhysicsImpl {
   ObjectVsBroadPhaseLayerFilterImpl object_vs_broad_phase_layer_filter_;
   JPH::PhysicsSystem physics_system_;
   JPH::BodyID player_id_;
+  std::vector<JPH::BodyID> cube_ids_;
 };
 
 Physics::Physics() {
@@ -234,7 +268,7 @@ Physics::Physics() {
   JPH::AssertFailed = assert_failed_impl;
 #endif
 
-  impl_.reset(new PhysicsImpl{1024, 0, 1024, 1024});
+  impl_.reset(new PhysicsImpl{65535, 0, 65535, 10000});
 }
 Physics::~Physics() = default;
 
