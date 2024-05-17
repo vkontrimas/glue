@@ -35,7 +35,7 @@ option (BUILD_SHARED_LIBS "Build shared libraries" ON)
 option (PRINT_UNSYMBOLIZED_STACK_TRACES
   "Print file offsets in traces instead of symbolizing" OFF)
 option (WITH_GFLAGS "Use gflags" ON)
-option (WITH_GTEST "Use Google Test" ON)
+option (WITH_GTEST "Use Google Test" OFF)
 option (WITH_PKGCONFIG "Enable pkg-config support" OFF)
 option (WITH_SYMBOLIZE "Enable symbolize module" ON)
 option (WITH_TLS "Enable Thread Local Storage (TLS) support" ON)
@@ -63,7 +63,10 @@ set (CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
 set (CMAKE_DEBUG_POSTFIX d)
 
-find_package (GTest NO_MODULE)
+#find_package (GTest NO_MODULE)
+# HACK: force usage of included gtest
+set(GTest_FOUND 1)
+set(GTest_DIR "${PROJECT_SOURCE_DIR}/../googletest-1.14.0")
 
 if (GTest_FOUND)
   set (HAVE_LIB_GTEST 1)
