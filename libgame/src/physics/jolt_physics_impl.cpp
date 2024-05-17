@@ -24,10 +24,14 @@ void JoltPhysicsImpl::step() {
 }
 
 void JoltPhysicsImpl::read_pose(ObjectID id, Pose& pose) {
+  auto it = object_id_to_body_id_.find(id);
+  CHECK(it != std::end(object_id_to_body_id_));
+
+  const auto body_id = it->second;
+
   auto& body_interface = physics_system_.GetBodyInterface();
-  auto position =
-      body_interface.GetCenterOfMassPosition(JPH::BodyID{id.value()});
-  auto rotation = body_interface.GetRotation(JPH::BodyID{id.value()});
+  JPH::Vec3 position = body_interface.GetCenterOfMassPosition(body_id);
+  JPH::Quat rotation = body_interface.GetRotation(body_id);
   pose.position = to_glm(position);
   pose.rotation = to_glm(rotation);
 }
@@ -52,7 +56,7 @@ void JoltPhysicsImpl::add_static_plane(ObjectID id, const Plane& plane) {
 }
 
 void JoltPhysicsImpl::add_dynamic_cube(ObjectID id, const Pose& pose,
-                                       float radius) {
+                                       float radius, bool start_active) {
   auto& body_interface = physics_system_.GetBodyInterface();
 
   JPH::BoxShapeSettings cube_shape_settings{JPH::Vec3{radius, radius, radius}};
@@ -65,7 +69,9 @@ void JoltPhysicsImpl::add_dynamic_cube(ObjectID id, const Pose& pose,
   JPH::Body* cube = body_interface.CreateBody(cube_settings);
   CHECK_NOTNULL(cube);
 
-  body_interface.AddBody(cube->GetID(), JPH::EActivation::DontActivate);
+  body_interface.AddBody(cube->GetID(), start_active
+                                            ? JPH::EActivation::Activate
+                                            : JPH::EActivation::DontActivate);
 
   map_object_to_body(id, cube->GetID());
 }

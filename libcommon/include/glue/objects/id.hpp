@@ -7,12 +7,7 @@
 namespace glue::objects {
 class ObjectID {
  public:
-  static constexpr ObjectID None() noexcept {
-    return ObjectID{static_cast<u32>(0)};
-  }
-
-  constexpr ObjectID() noexcept : ObjectID{None()} {}
-  explicit constexpr ObjectID(u32 id) noexcept : id_{id} {}
+  static ObjectID random();
 
   // TODO(vkon): make these constexpr by implementing a constexpr CRC32 or
   // similar
@@ -32,6 +27,8 @@ class ObjectID {
 
  private:
   u32 id_;
+
+  explicit constexpr ObjectID(u32 id) noexcept : id_{id} {}
 };
 }  // namespace glue::objects
 

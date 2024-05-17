@@ -5,9 +5,10 @@
 
 namespace glue::physics {
 template <typename T>
-concept AddCube = requires(T t, ObjectID id, const Pose& pose, float radius) {
-  { t.add_dynamic_cube(id, pose, radius) } -> std::same_as<void>;
-};
+concept AddCube =
+    requires(T t, ObjectID id, const Pose& pose, float radius, bool s) {
+      { t.add_dynamic_cube(id, pose, radius, s) } -> std::same_as<void>;
+    };
 
 template <typename T>
 concept AddPlane = requires(T t, ObjectID id, const Plane& plane) {

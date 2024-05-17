@@ -1,9 +1,10 @@
 #pragma once
 
+#include <glog/logging.h>
+
 #include <glue/physics/jolt_physics_engine.hpp>
 #include <glue/physics/physics_engine.hpp>
 #include <glue/types.hpp>
-#include <glue/world.hpp>
 #include <memory>
 #include <span>
 #include <unordered_map>
@@ -27,7 +28,7 @@ class Physics final {
  public:
   void update(float frame_delta_time) {
     time_since_past_pose_ += frame_delta_time;
-    while (time_since_past_pose_ > engine_.kTimestep) {
+    while (time_since_past_pose_ >= engine_.kTimestep) {
       time_since_past_pose_ -= engine_.kTimestep;
       engine_.step();
       read_back_poses(std::begin(objects_), std::end(objects_));
@@ -64,11 +65,12 @@ class Physics final {
     engine_.add_static_plane(id, plane);
   }
 
-  void add_dynamic_cube(ObjectID id, const Pose& pose, float radius) {
-    auto pair = objects_.emplace(id, Object{true, pose, pose});
+  void add_dynamic_cube(ObjectID id, const Pose& pose, float radius,
+                        bool start_active) {
+    auto pair = objects_.emplace(id, Object{false, pose, pose});
     CHECK(pair.second) << "object already exists in physics system: "
                        << id.retrieve_name();
-    engine_.add_dynamic_cube(id, pose, radius);
+    engine_.add_dynamic_cube(id, pose, radius, start_active);
   }
 
   Pose get_interpolated_pose(ObjectID object) const noexcept {
@@ -100,10 +102,12 @@ class Physics final {
         continue;
       }
 
-      using std::swap;
-      swap(it->second.past_pose, it->second.future_pose);
+      Object& o = it->second;
 
-      engine_.read_pose(it->first, it->second.future_pose);
+      using std::swap;
+      swap(o.past_pose, o.future_pose);
+
+      engine_.read_pose(it->first, o.future_pose);
     }
   }
 };

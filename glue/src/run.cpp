@@ -2,7 +2,6 @@
 
 #include <array>
 #include <glue/physics.hpp>
-#include <glue/world.hpp>
 
 #include "cube_renderer.hpp"
 #include "imgui/imgui_context.hpp"
@@ -21,7 +20,8 @@ class Renderer {
         plane_renderer_{view_projection_uniforms_, lighting_uniforms_} {}
 
   void draw(const Plane& plane, const Pose& player_cube,
-            const std::vector<Pose>& cubes, const OrbitCamera& camera) {
+            float player_cube_radius, const std::vector<Pose>& cubes,
+            float cube_radius, const OrbitCamera& camera) {
     {
       view_projection_uniforms_.bind_for_write();
       view_projection_uniforms_.set({camera});
@@ -35,11 +35,11 @@ class Renderer {
     glClearColor(0.0f, 0.4f, 0.6f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    cube_renderer_.draw(player_cube, 0.5f);
-    // for (const auto& cube : world.cubes) {
-    //   cube_renderer_.draw(cube, world.cubes_width);
-    // }
-    // plane_renderer_.draw(world.ground);
+    cube_renderer_.draw(player_cube, player_cube_radius);
+    for (const auto& cube : cubes) {
+      cube_renderer_.draw(cube, cube_radius);
+    }
+    plane_renderer_.draw(plane);
   }
 
  private:
@@ -48,6 +48,25 @@ class Renderer {
   CubeRenderer cube_renderer_;
   PlaneRenderer plane_renderer_;
 };
+
+void place_cubes(int rows, float cube_width, JoltPhysics& physics,
+                 std::vector<ObjectID>& cube_ids) {
+  cube_ids.reserve(rows * rows);
+
+  float spacing = cube_width * 6.0f;
+  vec3 start =
+      -1 * spacing * 0.5f * vec3{rows, 0, rows} + vec3{0, cube_width, 0};
+  for (int i = 0; i < rows; ++i) {
+    for (int j = 0; j < rows; ++j) {
+      vec3 position = start + spacing * vec3{i, 0, j};
+
+      const auto id = ObjectID::random();
+      cube_ids.emplace_back(id);
+      physics.add_dynamic_cube(id, {position, glm::identity<quat>()},
+                               cube_width, false);
+    }
+  }
+}
 }  // namespace
 
 void run() {
@@ -56,26 +75,27 @@ void run() {
   auto gl_context = init_gl(window.get());
   glue::imgui::ImGuiContext imgui{window.get(), gl_context.get()};
 
-  // World world{};
-  // world.player.position += vec3{0.0f, 4.0f, 0.0f};
-  // world.player.rotation =
-  //     quat{vec3{glm::radians(40.0f), glm::radians(20.0f), 0.0f}};
-  // world.camera.target = world.player.position;
-  // world.place_cubes(30);
-
-  // World previous_world = world;
-
   JoltPhysics physics;
+
+  const Plane ground_plane{{}, 3000.0f};
+  physics.add_static_plane(ObjectID::random(), ground_plane);
 
   OrbitCamera camera;
 
   ObjectID player_id{"player"};
+  constexpr float kPlayerCubeRadius = 0.5f;
   {
-    constexpr vec3 player_start_position{0.0f, 5.0f, 0.0f};
-    physics.add_dynamic_cube(
-        player_id, {player_start_position, glm::identity<quat>()}, 0.5f);
+    constexpr vec3 player_start_position{0.0f, 20.0f, 0.0f};
+    physics.add_dynamic_cube(player_id,
+                             {player_start_position, glm::identity<quat>()},
+                             kPlayerCubeRadius, true);
     camera.target = player_start_position;
   }
+
+  std::vector<ObjectID> cube_ids;
+  constexpr float kCubeRadius = 0.2f;
+  place_cubes(30, kCubeRadius, physics, cube_ids);
+  std::vector<Pose> cube_poses{cube_ids.size(), Pose{}};
 
   Renderer renderer;
 
@@ -146,7 +166,13 @@ void run() {
 
     const auto player_pose = physics.get_interpolated_pose(player_id);
     camera.target = player_pose.position;
-    renderer.draw({}, player_pose, {}, camera);
+
+    for (int i = 0; i < cube_poses.size(); ++i) {
+      cube_poses[i] = physics.get_interpolated_pose(cube_ids[i]);
+    }
+
+    renderer.draw(ground_plane, player_pose, kPlayerCubeRadius, cube_poses,
+                  kCubeRadius, camera);
 
     imgui.draw();
 

@@ -19,8 +19,8 @@ void JoltPhysicsEngine::read_pose(ObjectID object, Pose& pose) {
 }
 
 void JoltPhysicsEngine::add_dynamic_cube(ObjectID id, const Pose& pose,
-                                         float radius) {
-  impl_->add_dynamic_cube(id, pose, radius);
+                                         float radius, bool start_active) {
+  impl_->add_dynamic_cube(id, pose, radius, start_active);
 }
 void JoltPhysicsEngine::add_static_plane(ObjectID id, const Plane& plane) {
   impl_->add_static_plane(id, plane);

@@ -26,7 +26,8 @@ class JoltPhysicsImpl {
   void step();
   void read_pose(ObjectID id, Pose& pose);
 
-  void add_dynamic_cube(ObjectID id, const Pose& pose, float radius);
+  void add_dynamic_cube(ObjectID id, const Pose& pose, float radius,
+                        bool start_active);
   void add_static_plane(ObjectID id, const Plane& plane);
 
  private:
