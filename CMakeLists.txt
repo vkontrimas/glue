@@ -40,7 +40,7 @@ add_library(
     game OBJECT
     libgame/src/physics/layers.cpp
     libgame/src/physics/jolt_physics_engine.cpp
-    libgame/src/physics/jolt_physics_impl.cpp
+    libgame/src/physics/jolt_physics_backend.cpp
     libgame/src/physics/jolt_setup_globals.cpp
 )
 target_include_directories(game PUBLIC libgame/include)

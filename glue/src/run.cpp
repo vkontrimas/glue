@@ -49,7 +49,8 @@ class Renderer {
   PlaneRenderer plane_renderer_;
 };
 
-void place_cubes(int rows, float cube_width, JoltPhysics& physics,
+void place_cubes(int rows, float cube_width,
+                 physics::BasePhysicsEngine& physics,
                  std::vector<ObjectID>& cube_ids) {
   cube_ids.reserve(rows * rows);
 
@@ -140,7 +141,7 @@ void run() {
   auto gl_context = init_gl(window.get());
   glue::imgui::ImGuiContext imgui{window.get(), gl_context.get()};
 
-  JoltPhysics physics;
+  auto physics = create_physics_engine();
 
   const Plane ground_plane{{}, 3000.0f};
   physics.add_static_plane(ObjectID::random(), ground_plane);
@@ -215,6 +216,9 @@ void run() {
       if (ImGui::TreeNode("Settings", "%03.3f ms (%3.0f FPS)",
                           frame_delta_time * 1000.0f,
                           1.0f / frame_delta_time)) {
+        ImGui::Text("Physics %03.3f ms (%2.0f UPS)",
+                    physics.timestep() * 1000.0f, 1.0f / physics.timestep());
+        ImGui::Separator();
         if (ImGui::Checkbox("V-sync", &vsync)) {
           if (vsync) {
             SDL_GL_SetSwapInterval(1);

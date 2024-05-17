@@ -16,23 +16,23 @@
 #include "layers.hpp"
 
 namespace glue::physics {
-class JoltPhysicsImpl {
+class JoltPhysicsBackend {
  public:
-  static constexpr float kTimestep = 1.0f / 60.0f;
+  JoltPhysicsBackend(u32 max_rigidbodies, u32 mutex_count, u32 max_body_pairs,
+                     u32 max_contact_constraints);
 
-  JoltPhysicsImpl(u32 max_rigidbodies, u32 mutex_count, u32 max_body_pairs,
-                  u32 max_contact_constraints);
+  void update(f32 timestep, i32 collision_steps);
 
-  void step();
-  void read_pose(ObjectID id, Pose& pose);
+  /*
+   * This is an example of an inefficiency we could avoid if we
+   * exposed an opaque PhysicsComponent handle instead.
+   *
+   * (Containing BodyID and relevant physics system pointer.)
+   */
+  void map_object_to_body(ObjectID object, JPH::BodyID body);
+  JPH::BodyID get_body_id(ObjectID object) const;
 
-  void add_dynamic_cube(ObjectID id, const Pose& pose, float radius,
-                        bool start_active);
-  void add_static_plane(ObjectID id, const Plane& plane);
-
-  void add_torque(ObjectID id, const vec3& axis, f32 torque);
-
-  void add_impulse(ObjectID id, const vec3& impulse);
+  JPH::PhysicsSystem& physics_system() { return physics_system_; }
 
  private:
   JPHFactorySingletonInstance factory_singleton_instance_;
@@ -43,7 +43,5 @@ class JoltPhysicsImpl {
   ObjectVsBroadPhaseLayerFilterImpl object_vs_broad_phase_layer_filter_;
   JPH::PhysicsSystem physics_system_;
   std::unordered_map<ObjectID, JPH::BodyID> object_id_to_body_id_;
-
-  void map_object_to_body(ObjectID object, JPH::BodyID body);
 };
 }  // namespace glue::physics
