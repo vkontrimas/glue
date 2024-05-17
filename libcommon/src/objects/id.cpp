@@ -1,10 +1,15 @@
+#include <glog/logging.h>
 #include <zlib.h>
 
 #include <cstdlib>
 #include <glue/objects/id.hpp>
+#include <unordered_map>
 
+// TODO(vkon): store all these things at build time instead of runtime
 namespace glue::objects {
 namespace {
+std::unordered_map<u32, const char*> gNameTable;
+
 u32 hash_name_weak_crypto(const char* name) {
   // we only need a uniqueness sum with less collisions
   // doesn't have to be cryptographically strong
@@ -13,6 +18,21 @@ u32 hash_name_weak_crypto(const char* name) {
   return crc32(crc, reinterpret_cast<const u8*>(name), len);
 }
 }  // namespace
-ObjectID::ObjectID(const char* name) : id_{hash_name_weak_crypto(name)} {}
+ObjectID::ObjectID(const char* name) : id_{hash_name_weak_crypto(name)} {
+  auto pair = gNameTable.emplace(id_, name);
+  if (!pair.second) {
+    LOG(ERROR) << "ObjectID collision. Existing ID = " << pair.first->second
+               << " New ID = " << name;
+  }
+}
 ObjectID::ObjectID(const std::string& name) : ObjectID{name.c_str()} {}
-}  // namespace glue
+
+const char* ObjectID::retrieve_name() const {
+  auto it = gNameTable.find(id_);
+  if (it == std::end(gNameTable)) {
+    return "unknown";
+  } else {
+    return it->second;
+  }
+}
+}  // namespace glue::objects

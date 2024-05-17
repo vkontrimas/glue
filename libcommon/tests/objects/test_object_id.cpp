@@ -36,3 +36,13 @@ TEST(ObjectID, WeakCollisionSanityCheck) {
     ids.insert(id);
   }
 }
+
+TEST(ObjectID, RecoverNameFromID) {
+  const std::vector<const char*> expected{
+      "player", "cube102", "ground", "earth", "light", "camera12341u895191515",
+      "camera"};
+
+  for (int i = 0; i < expected.size(); ++i) {
+    ASSERT_EQ(ObjectID{expected[i]}.retrieve_name(), expected[i]);
+  }
+}

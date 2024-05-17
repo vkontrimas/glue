@@ -54,17 +54,17 @@ void run() {
   auto gl_context = init_gl(window.get());
   glue::imgui::ImGuiContext imgui{window.get(), gl_context.get()};
 
-  World world{};
-  world.player.position += vec3{0.0f, 4.0f, 0.0f};
-  world.player.rotation =
-      quat{vec3{glm::radians(40.0f), glm::radians(20.0f), 0.0f}};
-  world.camera.target = world.player.position;
-  world.place_cubes(30);
+  // World world{};
+  // world.player.position += vec3{0.0f, 4.0f, 0.0f};
+  // world.player.rotation =
+  //     quat{vec3{glm::radians(40.0f), glm::radians(20.0f), 0.0f}};
+  // world.camera.target = world.player.position;
+  // world.place_cubes(30);
 
-  World previous_world = world;
+  // World previous_world = world;
 
-  Physics physics;
-  physics.setup_static_objects(world);
+  JoltPhysics physics;
+  // physics.setup_static_objects(world);
 
   Renderer renderer;
 
@@ -131,11 +131,11 @@ void run() {
       ImGui::ShowDemoWindow(&show_imgui_demo);
     }
 
-    world.camera.target = world.player.position;
-    physics.update(frame_delta_time, previous_world, world);
+    // world.camera.target = world.player.position;
+    // physics.update(frame_delta_time, previous_world, world);
 
-    const auto t = physics.remaining_simulation_time() / physics.timestep();
-    renderer.draw(interpolated(previous_world, world, t));
+    // const auto t = physics.remaining_simulation_time() / physics.timestep();
+    // renderer.draw(interpolated(previous_world, world, t));
     imgui.draw();
 
     SDL_GL_SwapWindow(window.get());

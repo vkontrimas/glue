@@ -28,6 +28,8 @@ class ObjectID {
     return id_ == other.id_;
   }
 
+  const char* retrieve_name() const;
+
  private:
   u32 id_;
 };

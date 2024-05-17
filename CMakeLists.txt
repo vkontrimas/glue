@@ -38,11 +38,20 @@ endif()
 # (for client / server)
 add_library(
     game OBJECT
-    libgame/src/physics.cpp
+    libgame/src/physics/layers.cpp
+    libgame/src/physics/jolt_physics_engine.cpp
+    libgame/src/physics/jolt_physics_impl.cpp
+    libgame/src/physics/jolt_setup_globals.cpp
 )
 target_include_directories(game PUBLIC libgame/include)
 target_link_libraries(game PUBLIC common Jolt)
 target_compile_features(game PUBLIC cxx_std_20)
+
+if (GLUE_BUILD_TESTS) 
+    add_executable(tests_game libgame/tests/physics/test_jolt_glm_compat.cpp)
+    target_link_libraries(tests_game PRIVATE game GTest::gtest_main)
+    target_include_directories(tests_game PRIVATE libgame/src)
+endif()
 
 # Client
 add_executable(
@@ -66,6 +75,7 @@ endif()
 if (GLUE_BUILD_TESTS) 
     include(GoogleTest)
     gtest_discover_tests(tests_common)
+    gtest_discover_tests(tests_game)
 endif()
 
 # Tests
