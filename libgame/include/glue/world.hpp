@@ -10,20 +10,20 @@ namespace glue {
 struct World {
   Plane ground{{}, 3000.0f};
   Pose player;
+  float player_width = 1.0f;
   std::vector<Pose> cubes;
+  float cubes_width = 0.5f;
   OrbitCamera camera;
 
   void place_cubes(int rows) {
-    cubes.resize(rows * rows);
-
-    const float start = -(rows) + 1.5f;
-
-    int cube = 0;
+    cubes.reserve(rows * rows);
+    float spacing = cubes_width * 2.25f;
+    vec3 start =
+        -1 * spacing * 0.5f * vec3{rows, 0, rows} + vec3{0, cubes_width, 0};
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < rows; ++j) {
-        vec3 position{start + 2.0f * i, 1.0f, start + 2.0f * j};
-        cubes[cube] = {position, glm::identity<quat>()};
-        cube++;
+        vec3 position = start + spacing * vec3{i, 0, j};
+        cubes.push_back({position, glm::identity<quat>()});
       }
     }
   }

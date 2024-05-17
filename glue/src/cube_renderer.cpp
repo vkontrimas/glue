@@ -11,6 +11,7 @@ layout(std140) uniform view_projection_block {
 };
 
 uniform mat4 model_matrix;
+uniform float cube_scale;
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
@@ -23,7 +24,7 @@ void main() {
   // ONLY UNIFORM SCALE IS ALLOWED!
   mat3 model_rotation_scale = mat3(model_matrix);
   vert_normal = model_rotation_scale * normal;
-  gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position, 1.0);
+  gl_Position = projection_matrix * view_matrix * model_matrix * vec4(position * cube_scale, 1.0);
 }
 )shader";
 
@@ -55,6 +56,7 @@ CubeRenderer::CubeRenderer(
   view_projection_block.connect(shader_, "view_projection_block");
   lighting_block.connect(shader_, "lighting_block");
   model_uniform_ = shader_.uniform_location("model_matrix");
+  scale_uniform_ = shader_.uniform_location("cube_scale");
 
   {
     GLuint buffers[2];
@@ -148,11 +150,13 @@ CubeRenderer::CubeRenderer(
                         (GLvoid*)sizeof(vec3));
 }
 
-void CubeRenderer::draw(const Pose& pose) {
+void CubeRenderer::draw(const Pose& pose, float width) {
   glUseProgram(*shader_);
 
   const mat4 model_matrix = pose.model_matrix();
   glUniformMatrix4fv(model_uniform_, 1, GL_FALSE, glm::value_ptr(model_matrix));
+
+  glUniform1f(scale_uniform_, width);
 
   glBindVertexArray(*vao_);
   glDrawElements(GL_TRIANGLES, 3 * 2 * 6, ebo_.Type, 0);

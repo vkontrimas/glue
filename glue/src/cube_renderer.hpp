@@ -14,7 +14,7 @@ class CubeRenderer {
       const gfx::UniformBlock<uniforms::ViewProjection>& view_projection_block,
       const gfx::UniformBlock<uniforms::Lighting>& lighting_block);
 
-  void draw(const Pose& pose);
+  void draw(const Pose& pose, float width);
 
  private:
   gfx::VertexBuffer vbo_;
@@ -22,6 +22,7 @@ class CubeRenderer {
   gfx::VertexArray vao_;
   gfx::ShaderProgram shader_;
   GLint model_uniform_;
+  GLint scale_uniform_;
 };
 
 }  // namespace glue

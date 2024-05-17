@@ -184,7 +184,8 @@ class PhysicsImpl {
     body_interface.AddBody(ground->GetID(), JPH::EActivation::DontActivate);
 
     // ADD PLAYER CUBE
-    JPH::BoxShapeSettings player_shape_settings{JPH::Vec3{1.0f, 1.0f, 1.0f}};
+    JPH::BoxShapeSettings player_shape_settings{
+        JPH::Vec3{world.player_width, world.player_width, world.player_width}};
     auto player_shape_result = player_shape_settings.Create();
     CHECK(!player_shape_result.HasError());
 
@@ -199,7 +200,8 @@ class PhysicsImpl {
 
     // ADD THE OTHER CUBES
     for (const auto& cube_pose : world.cubes) {
-      JPH::BoxShapeSettings cube_shape_settings{JPH::Vec3{0.2f, 0.2f, 0.2f}};
+      JPH::BoxShapeSettings cube_shape_settings{
+          JPH::Vec3{world.cubes_width, world.cubes_width, world.cubes_width}};
       auto cube_shape_result = cube_shape_settings.Create();
       CHECK(!cube_shape_result.HasError());
 
@@ -209,7 +211,7 @@ class PhysicsImpl {
       JPH::Body* cube = body_interface.CreateBody(cube_settings);
       CHECK_NOTNULL(cube);
 
-      body_interface.AddBody(cube->GetID(), JPH::EActivation::Activate);
+      body_interface.AddBody(cube->GetID(), JPH::EActivation::DontActivate);
 
       cube_ids_.push_back(cube->GetID());
     }
