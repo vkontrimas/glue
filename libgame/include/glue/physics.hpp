@@ -26,10 +26,12 @@ namespace glue {
 template <physics::PhysicsEngine T>
 class Physics final {
  public:
-  void update(float frame_delta_time) {
+  template <typename FnPreUpdate>
+  void update(float frame_delta_time, FnPreUpdate pre_update) {
     time_since_past_pose_ += frame_delta_time;
     while (time_since_past_pose_ >= engine_.kTimestep) {
       time_since_past_pose_ -= engine_.kTimestep;
+      pre_update();
       engine_.step();
       read_back_poses(std::begin(objects_), std::end(objects_));
     }

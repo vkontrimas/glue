@@ -161,7 +161,7 @@ void run() {
                              kPlayerCubeRadius, true);
     camera.target = player_start_position;
   }
-  MoveInput player_move_input{220000.0f};
+  MoveInput player_move_input{4000.0f};
 
   std::vector<ObjectID> cube_ids;
   constexpr float kCubeRadius = 0.2f;
@@ -237,12 +237,13 @@ void run() {
       ImGui::ShowDemoWindow(&show_imgui_demo);
     }
 
-    physics.update(frame_delta_time);
-    if (player_move_input.has_input()) {
-      physics.add_torque(player_id,
-                         player_move_input.torque_axis(camera.position_rel.yaw),
-                         player_move_input.torque() * frame_delta_time);
-    }
+    physics.update(frame_delta_time, [&]() {
+      if (player_move_input.has_input()) {
+        physics.add_torque(
+            player_id, player_move_input.torque_axis(camera.position_rel.yaw),
+            player_move_input.torque());
+      }
+    });
 
     const auto player_pose = physics.get_interpolated_pose(player_id);
     camera.target = player_pose.position;
