@@ -30,6 +30,10 @@ class JoltPhysicsImpl {
                         bool start_active);
   void add_static_plane(ObjectID id, const Plane& plane);
 
+  void add_torque(ObjectID id, const vec3& axis, f32 torque);
+
+  void add_impulse(ObjectID id, const vec3& impulse);
+
  private:
   JPHFactorySingletonInstance factory_singleton_instance_;
   JPH::TempAllocatorImpl temp_allocator_;

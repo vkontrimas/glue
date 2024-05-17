@@ -16,6 +16,12 @@ concept AddPlane = requires(T t, ObjectID id, const Plane& plane) {
 };
 
 template <typename T>
+concept AddForces = requires(T t, ObjectID id, vec3 vec, f32 val) {
+  { t.add_torque(id, vec, val) } -> std::same_as<void>;
+  { t.add_impulse(id, vec) } -> std::same_as<void>;
+};
+
+template <typename T>
 concept PhysicsSimulator = requires(T t, ObjectID id, Pose& pose) {
   { t.step() } -> std::same_as<void>;
   { T::kTimestep } -> std::convertible_to<float>;
@@ -23,5 +29,6 @@ concept PhysicsSimulator = requires(T t, ObjectID id, Pose& pose) {
 };
 
 template <typename T>
-concept PhysicsEngine = PhysicsSimulator<T> && AddCube<T> && AddPlane<T>;
+concept PhysicsEngine =
+    PhysicsSimulator<T> && AddCube<T> && AddPlane<T> && AddForces<T>;
 }  // namespace glue::physics

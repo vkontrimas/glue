@@ -67,6 +67,76 @@ void place_cubes(int rows, float cube_width, JoltPhysics& physics,
     }
   }
 }
+
+class MoveInput {
+ public:
+  explicit MoveInput(f32 torque) : torque_{torque} {}
+
+  void process_event(SDL_Event& event) {
+    if (event.type != SDL_KEYUP && event.type != SDL_KEYDOWN) {
+      return;
+    }
+
+    if (event.key.keysym.sym == SDLK_w) {
+      input_forward_ = event.type == SDL_KEYDOWN;
+    }
+    if (event.key.keysym.sym == SDLK_s) {
+      input_back_ = event.type == SDL_KEYDOWN;
+    }
+    if (event.key.keysym.sym == SDLK_a) {
+      input_left_ = event.type == SDL_KEYDOWN;
+    }
+    if (event.key.keysym.sym == SDLK_d) {
+      input_right_ = event.type == SDL_KEYDOWN;
+    }
+  }
+
+  bool has_input() const { return input_direction() != vec3{0.0f}; }
+
+  vec3 input_direction() const {
+    vec3 direction{0.0f};
+    if (input_forward_) {
+      direction += vec3{0.0f, 0.0f, -1.0f};
+    }
+    if (input_back_) {
+      direction += vec3{0.0f, 0.0f, 1.0f};
+    }
+    if (input_left_) {
+      direction += vec3{-1.0f, 0.0f, 0.0f};
+    }
+    if (input_right_) {
+      direction += vec3{1.0f, 0.0f, 0.0f};
+    }
+
+    return direction;
+  }
+
+  vec3 movement_direction(f32 camera_yaw) const {
+    const float x = glm::cos(camera_yaw);
+    const float z = glm::sin(camera_yaw);
+    const vec3 forward{x, 0, z};
+    const vec3 right = glm::cross(vec3{0, 1, 0}, forward);
+    const vec3 input = input_direction();
+    return glm::normalize(right * input.x + forward * input.z);
+  }
+
+  vec3 torque_axis(f32 camera_yaw) const {
+    if (!has_input()) {
+      return vec3{};
+    }
+
+    return glm::cross(vec3{0.0f, 1.0f, 0.0f}, movement_direction(camera_yaw));
+  }
+
+  f32 torque() const { return has_input() ? torque_ : 0.0f; }
+
+ private:
+  bool input_forward_ = false;
+  bool input_back_ = false;
+  bool input_left_ = false;
+  bool input_right_ = false;
+  f32 torque_;
+};
 }  // namespace
 
 void run() {
@@ -85,12 +155,13 @@ void run() {
   ObjectID player_id{"player"};
   constexpr float kPlayerCubeRadius = 0.5f;
   {
-    constexpr vec3 player_start_position{0.0f, 20.0f, 0.0f};
+    constexpr vec3 player_start_position{0.0f, 3.0f, 0.0f};
     physics.add_dynamic_cube(player_id,
                              {player_start_position, glm::identity<quat>()},
                              kPlayerCubeRadius, true);
     camera.target = player_start_position;
   }
+  MoveInput player_move_input{220000.0f};
 
   std::vector<ObjectID> cube_ids;
   constexpr float kCubeRadius = 0.2f;
@@ -119,12 +190,16 @@ void run() {
     SDL_Event event{};
     while (SDL_PollEvent(&event)) {
       imgui.process_event(event);
+      player_move_input.process_event(event);
 
       if (event.type == SDL_QUIT) {
         is_running = false;
       } else if (event.type == SDL_KEYDOWN &&
                  event.key.keysym.sym == SDLK_ESCAPE) {
         is_running = false;
+      } else if (event.type == SDL_KEYUP &&
+                 event.key.keysym.sym == SDLK_SPACE) {
+        physics.add_impulse(player_id, vec3{0.0f, 5000.0f, 0.0f});
       }
     }
 
@@ -163,6 +238,11 @@ void run() {
     }
 
     physics.update(frame_delta_time);
+    if (player_move_input.has_input()) {
+      physics.add_torque(player_id,
+                         player_move_input.torque_axis(camera.position_rel.yaw),
+                         player_move_input.torque() * frame_delta_time);
+    }
 
     const auto player_pose = physics.get_interpolated_pose(player_id);
     camera.target = player_pose.position;

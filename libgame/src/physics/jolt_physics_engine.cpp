@@ -22,7 +22,16 @@ void JoltPhysicsEngine::add_dynamic_cube(ObjectID id, const Pose& pose,
                                          float radius, bool start_active) {
   impl_->add_dynamic_cube(id, pose, radius, start_active);
 }
+
 void JoltPhysicsEngine::add_static_plane(ObjectID id, const Plane& plane) {
   impl_->add_static_plane(id, plane);
+}
+
+void JoltPhysicsEngine::add_torque(ObjectID id, const vec3& axis, f32 torque) {
+  impl_->add_torque(id, axis, torque);
+}
+
+void JoltPhysicsEngine::add_impulse(ObjectID id, const vec3& impulse) {
+  impl_->add_impulse(id, impulse);
 }
 }  // namespace glue::physics

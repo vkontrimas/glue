@@ -40,6 +40,18 @@ class Physics final {
   }
 
   // This is stupid.
+
+  // Future note: this was VERY stupid. It's such a pain in the ass to pipe new
+  // functions through. Lesson learned. Next interface will be much thinner.
+
+  // We'll create our own components for colliders, shapes, phys materials
+  // Then, a special class somehow instantiated from the physics system will map
+  // those onto Jolt (or whatever)
+
+  // Calls will be thinly implemented:
+  //  We'll get rid of PIMPL and just have a pointer to an opaque struct
+  //  containing jolt resources accessed directly from the super-class.
+
   // We end up in a three call chain for something that could be much more
   // direct. Too much indirection but it does allow DI.
 
@@ -72,6 +84,18 @@ class Physics final {
                        << id.retrieve_name();
     engine_.add_dynamic_cube(id, pose, radius, start_active);
   }
+
+  void add_torque(ObjectID id, const vec3& axis, f32 torque) {
+    engine_.add_torque(id, axis, torque);
+  }
+
+  void add_impulse(ObjectID id, const vec3& impulse) {
+    engine_.add_impulse(id, impulse);
+  }
+
+  // In the future:
+  // on_collision_enter() allows registering callback via lambda for object ID
+  // on_collision_exit() likewise
 
   Pose get_interpolated_pose(ObjectID object) const noexcept {
     auto it = objects_.find(object);

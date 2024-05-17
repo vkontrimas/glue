@@ -76,6 +76,26 @@ void JoltPhysicsImpl::add_dynamic_cube(ObjectID id, const Pose& pose,
   map_object_to_body(id, cube->GetID());
 }
 
+void JoltPhysicsImpl::add_torque(ObjectID id, const vec3& axis, f32 torque) {
+  auto& body_interface = physics_system_.GetBodyInterface();
+
+  auto it = object_id_to_body_id_.find(id);
+  CHECK(it != std::end(object_id_to_body_id_));
+  const auto body_id = it->second;
+
+  body_interface.AddTorque(body_id, from_glm(axis * torque));
+}
+
+void JoltPhysicsImpl::add_impulse(ObjectID id, const vec3& impulse) {
+  auto& body_interface = physics_system_.GetBodyInterface();
+
+  auto it = object_id_to_body_id_.find(id);
+  CHECK(it != std::end(object_id_to_body_id_));
+  const auto body_id = it->second;
+
+  body_interface.AddImpulse(body_id, from_glm(impulse));
+}
+
 void JoltPhysicsImpl::map_object_to_body(ObjectID id, JPH::BodyID body) {
   auto it_success_pair = object_id_to_body_id_.emplace(id, body);
   CHECK(it_success_pair.second) << "couldn't insert object. already mapped.";
