@@ -29,7 +29,7 @@ target_compile_options(common INTERFACE -Wno-deprecated-volatile)
 
 if (GLUE_BUILD_TESTS) 
     add_executable(tests_common libcommon/tests/test_object_id.cpp)
-    target_link_libraries(tests_common PRIVATE GTest::gtest_main)
+    target_link_libraries(tests_common PRIVATE common GTest::gtest_main)
 endif()
 
 # Gameplay logic
