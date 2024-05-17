@@ -59,7 +59,7 @@ void run() {
   world.player.rotation =
       quat{vec3{glm::radians(40.0f), glm::radians(20.0f), 0.0f}};
   world.camera.target = world.player.position;
-  world.place_cubes(50);
+  world.place_cubes(30);
 
   World previous_world = world;
 

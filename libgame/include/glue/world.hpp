@@ -10,7 +10,7 @@ namespace glue {
 struct World {
   Plane ground{{}, 3000.0f};
   Pose player;
-  float player_width = 1.0f;
+  float player_width = 1.25f;
   std::vector<Pose> cubes;
   float cubes_width = 0.5f;
   OrbitCamera camera;
