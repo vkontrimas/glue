@@ -29,10 +29,14 @@ class Renderer {
     lighting_uniforms_.bind_for_shader();
 
     glEnable(GL_DEPTH_TEST);
+
     glClearColor(0.0f, 0.4f, 0.6f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     cube_renderer_.draw(world.player);
+    for (const auto& cube : world.cubes) {
+      cube_renderer_.draw(cube);
+    }
     plane_renderer_.draw(world.ground);
   }
 
@@ -55,6 +59,7 @@ void run() {
   world.player.rotation =
       quat{vec3{glm::radians(40.0f), glm::radians(20.0f), 0.0f}};
   world.camera.target = world.player.position;
+  world.place_cubes(50);
 
   World previous_world = world;
 

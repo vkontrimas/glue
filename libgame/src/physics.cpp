@@ -174,7 +174,8 @@ class PhysicsImpl {
     CHECK(!ground_shape_result.HasError());
 
     JPH::BodyCreationSettings ground_settings{
-        ground_shape_result.Get(), glm(world.ground.pose.position),
+        ground_shape_result.Get(),
+        glm(world.ground.pose.position - vec3{0.0f, 1.0f, 0.0f}),
         glm(world.ground.pose.rotation), JPH::EMotionType::Static,
         Layers::Static};
     JPH::Body* ground = body_interface.CreateBody(ground_settings);
