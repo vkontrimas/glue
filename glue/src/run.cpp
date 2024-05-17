@@ -11,6 +11,7 @@
 
 namespace glue {
 namespace {
+// Next component-ification target
 class Renderer {
  public:
   Renderer()
@@ -19,10 +20,11 @@ class Renderer {
         cube_renderer_{view_projection_uniforms_, lighting_uniforms_},
         plane_renderer_{view_projection_uniforms_, lighting_uniforms_} {}
 
-  void draw(const World& world) {
+  void draw(const Plane& plane, const Pose& player_cube,
+            const std::vector<Pose>& cubes, const OrbitCamera& camera) {
     {
       view_projection_uniforms_.bind_for_write();
-      view_projection_uniforms_.set({world.camera});
+      view_projection_uniforms_.set({camera});
     }
 
     view_projection_uniforms_.bind_for_shader();
@@ -33,11 +35,11 @@ class Renderer {
     glClearColor(0.0f, 0.4f, 0.6f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    cube_renderer_.draw(world.player, world.player_width);
-    for (const auto& cube : world.cubes) {
-      cube_renderer_.draw(cube, world.cubes_width);
-    }
-    plane_renderer_.draw(world.ground);
+    cube_renderer_.draw(player_cube, 0.5f);
+    // for (const auto& cube : world.cubes) {
+    //   cube_renderer_.draw(cube, world.cubes_width);
+    // }
+    // plane_renderer_.draw(world.ground);
   }
 
  private:
@@ -64,7 +66,16 @@ void run() {
   // World previous_world = world;
 
   JoltPhysics physics;
-  // physics.setup_static_objects(world);
+
+  OrbitCamera camera;
+
+  ObjectID player_id{"player"};
+  {
+    constexpr vec3 player_start_position{0.0f, 5.0f, 0.0f};
+    physics.add_dynamic_cube(
+        player_id, {player_start_position, glm::identity<quat>()}, 0.5f);
+    camera.target = player_start_position;
+  }
 
   Renderer renderer;
 
@@ -131,11 +142,12 @@ void run() {
       ImGui::ShowDemoWindow(&show_imgui_demo);
     }
 
-    // world.camera.target = world.player.position;
-    // physics.update(frame_delta_time, previous_world, world);
+    physics.update(frame_delta_time);
 
-    // const auto t = physics.remaining_simulation_time() / physics.timestep();
-    // renderer.draw(interpolated(previous_world, world, t));
+    const auto player_pose = physics.get_interpolated_pose(player_id);
+    camera.target = player_pose.position;
+    renderer.draw({}, player_pose, {}, camera);
+
     imgui.draw();
 
     SDL_GL_SwapWindow(window.get());

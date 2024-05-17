@@ -32,7 +32,7 @@ void JoltPhysicsImpl::read_pose(ObjectID id, Pose& pose) {
   pose.rotation = to_glm(rotation);
 }
 
-void JoltPhysicsImpl::create_static_plane(ObjectID id, const Plane& plane) {
+void JoltPhysicsImpl::add_static_plane(ObjectID id, const Plane& plane) {
   auto& body_interface = physics_system_.GetBodyInterface();
 
   JPH::BoxShapeSettings shape_settings{JPH::Vec3{plane.size, 1.0f, plane.size}};
@@ -43,16 +43,16 @@ void JoltPhysicsImpl::create_static_plane(ObjectID id, const Plane& plane) {
       shape_result.Get(),
       from_glm(plane.pose.position - vec3{0.0f, 1.0f, 0.0f}),
       from_glm(plane.pose.rotation), JPH::EMotionType::Static, Layers::Static};
-  JPH::Body* plane_body = body_interface.CreateBodyWithID(
-      JPH::BodyID{id.value()}, body_creation_settings);
+  JPH::Body* plane_body = body_interface.CreateBody(body_creation_settings);
   CHECK_NOTNULL(plane_body);
 
-  body_interface.AddBody(JPH::BodyID{id.value()},
-                         JPH::EActivation::DontActivate);
+  body_interface.AddBody(plane_body->GetID(), JPH::EActivation::DontActivate);
+
+  map_object_to_body(id, plane_body->GetID());
 }
 
-void JoltPhysicsImpl::create_dynamic_cube(ObjectID id, const Pose& pose,
-                                          float radius) {
+void JoltPhysicsImpl::add_dynamic_cube(ObjectID id, const Pose& pose,
+                                       float radius) {
   auto& body_interface = physics_system_.GetBodyInterface();
 
   JPH::BoxShapeSettings cube_shape_settings{JPH::Vec3{radius, radius, radius}};
@@ -62,11 +62,16 @@ void JoltPhysicsImpl::create_dynamic_cube(ObjectID id, const Pose& pose,
   JPH::BodyCreationSettings cube_settings{
       cube_shape_result.Get(), from_glm(pose.position), from_glm(pose.rotation),
       JPH::EMotionType::Dynamic, Layers::Moving};
-  JPH::Body* cube =
-      body_interface.CreateBodyWithID(JPH::BodyID{id.value()}, cube_settings);
+  JPH::Body* cube = body_interface.CreateBody(cube_settings);
   CHECK_NOTNULL(cube);
 
-  body_interface.AddBody(JPH::BodyID{id.value()},
-                         JPH::EActivation::DontActivate);
+  body_interface.AddBody(cube->GetID(), JPH::EActivation::DontActivate);
+
+  map_object_to_body(id, cube->GetID());
+}
+
+void JoltPhysicsImpl::map_object_to_body(ObjectID id, JPH::BodyID body) {
+  auto it_success_pair = object_id_to_body_id_.emplace(id, body);
+  CHECK(it_success_pair.second) << "couldn't insert object. already mapped.";
 }
 }  // namespace glue::physics

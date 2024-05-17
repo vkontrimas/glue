@@ -26,8 +26,8 @@ class JoltPhysicsImpl {
   void step();
   void read_pose(ObjectID id, Pose& pose);
 
-  void create_dynamic_cube(ObjectID id, const Pose& pose, float radius);
-  void create_static_plane(ObjectID id, const Plane& plane);
+  void add_dynamic_cube(ObjectID id, const Pose& pose, float radius);
+  void add_static_plane(ObjectID id, const Plane& plane);
 
  private:
   JPHFactorySingletonInstance factory_singleton_instance_;
@@ -37,5 +37,8 @@ class JoltPhysicsImpl {
   BroadPhaseLayerInterfaceImpl broad_phase_layer_interface_;
   ObjectVsBroadPhaseLayerFilterImpl object_vs_broad_phase_layer_filter_;
   JPH::PhysicsSystem physics_system_;
+  std::unordered_map<ObjectID, JPH::BodyID> object_id_to_body_id_;
+
+  void map_object_to_body(ObjectID object, JPH::BodyID body);
 };
 }  // namespace glue::physics

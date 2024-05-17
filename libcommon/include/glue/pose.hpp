@@ -18,4 +18,10 @@ struct Pose {
            glm::toMat4(rotation);
   }
 };
+
+inline constexpr static Pose lerp(const Pose& pose_a, const Pose& pose_b,
+                                  float a) {
+  return Pose{glm::mix(pose_a.position, pose_b.position, a),
+              glm::slerp(pose_a.rotation, pose_b.rotation, a)};
+}
 }  // namespace glue

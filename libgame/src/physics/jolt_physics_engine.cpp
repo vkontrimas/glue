@@ -18,11 +18,11 @@ void JoltPhysicsEngine::read_pose(ObjectID object, Pose& pose) {
   impl_->read_pose(object, pose);
 }
 
-void JoltPhysicsEngine::create_dynamic_cube(ObjectID id, const Pose& pose,
-                                            float radius) {
-  impl_->create_dynamic_cube(id, pose, radius);
+void JoltPhysicsEngine::add_dynamic_cube(ObjectID id, const Pose& pose,
+                                         float radius) {
+  impl_->add_dynamic_cube(id, pose, radius);
 }
-void JoltPhysicsEngine::create_static_plane(ObjectID id, const Plane& plane) {
-  impl_->create_static_plane(id, plane);
+void JoltPhysicsEngine::add_static_plane(ObjectID id, const Plane& plane) {
+  impl_->add_static_plane(id, plane);
 }
 }  // namespace glue::physics

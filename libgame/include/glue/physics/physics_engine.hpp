@@ -5,14 +5,13 @@
 
 namespace glue::physics {
 template <typename T>
-concept CreateCube =
-    requires(T t, ObjectID id, const Pose& pose, float radius) {
-      { t.create_dynamic_cube(id, pose, radius) } -> std::same_as<void>;
-    };
+concept AddCube = requires(T t, ObjectID id, const Pose& pose, float radius) {
+  { t.add_dynamic_cube(id, pose, radius) } -> std::same_as<void>;
+};
 
 template <typename T>
-concept CreatePlane = requires(T t, ObjectID id, const Plane& plane) {
-  { t.create_static_plane(id, plane) } -> std::same_as<void>;
+concept AddPlane = requires(T t, ObjectID id, const Plane& plane) {
+  { t.add_static_plane(id, plane) } -> std::same_as<void>;
 };
 
 template <typename T>
@@ -23,5 +22,5 @@ concept PhysicsSimulator = requires(T t, ObjectID id, Pose& pose) {
 };
 
 template <typename T>
-concept PhysicsEngine = PhysicsSimulator<T> && CreateCube<T> && CreatePlane<T>;
+concept PhysicsEngine = PhysicsSimulator<T> && AddCube<T> && AddPlane<T>;
 }  // namespace glue::physics
