@@ -99,7 +99,8 @@ void run() {
     if (ImGui::Begin("FPS", nullptr,
                      ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove |
                          ImGuiWindowFlags_NoCollapse |
-                         ImGuiWindowFlags_NoDecoration)) {
+                         ImGuiWindowFlags_NoDecoration |
+                         ImGuiWindowFlags_NoNavInputs)) {
       if (ImGui::TreeNode("Settings", "%03.3f ms (%3.0f FPS)",
                           frame_delta_time * 1000.0f,
                           1.0f / frame_delta_time)) {
