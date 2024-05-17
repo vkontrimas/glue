@@ -19,7 +19,7 @@ struct OrbitCamera {
 
   constexpr OrbitCamera(f32 aspect_ratio) noexcept
       : OrbitCamera{
-            radial{glm::radians(35.0f), glm::radians(45.0f), 10.0f},
+            radial{glm::radians(35.0f), glm::radians(0.0f), 10.0f},
             Perspective{glm::radians(60.0f), 0.05f, 300.0f, aspect_ratio}} {}
 
   constexpr OrbitCamera(radial position, Perspective perspective) noexcept
