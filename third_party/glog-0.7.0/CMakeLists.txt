@@ -546,6 +546,7 @@ if (NOT WITH_FUZZING STREQUAL "none")
   endif (WITH_FUZZING STREQUAL "ossfuzz")
 endif (NOT WITH_FUZZING STREQUAL "none")
 
+set(BUILD_TESTING OFF)
 if (BUILD_TESTING)
   add_library (glog_test INTERFACE)
   target_link_libraries (glog_test INTERFACE $<TARGET_OBJECTS:glog_internal> $<TARGET_PROPERTY:glog,LINK_LIBRARIES>)
