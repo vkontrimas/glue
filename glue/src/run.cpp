@@ -19,9 +19,7 @@ class Renderer {
         cube_renderer_{view_projection_uniforms_, lighting_uniforms_},
         plane_renderer_{view_projection_uniforms_, lighting_uniforms_} {}
 
-  void draw(const Plane& plane, const Pose& player_cube, f32 player_activity,
-            float player_cube_radius, const std::vector<Pose>& cubes,
-            const std::vector<f32>& cube_activities, float cube_radius,
+  void draw(const Plane& plane, std::span<CubeRenderer::Instance> cubes,
             const OrbitCamera& camera) {
     {
       view_projection_uniforms_.bind_for_write();
@@ -37,11 +35,7 @@ class Renderer {
     glClearColor(0.0f, 0.4f, 0.6f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    cube_renderer_.draw(player_cube, player_cube_radius, player_activity);
-    CHECK(cubes.size() == cube_activities.size());
-    for (int i = 0; i < cubes.size(); ++i) {
-      cube_renderer_.draw(cubes[i], cube_radius, cube_activities[i]);
-    }
+    cube_renderer_.draw(cubes);
     plane_renderer_.draw(plane);
   }
 
@@ -188,9 +182,10 @@ void run() {
   std::vector<float> cube_activities;
   constexpr float kCubeRadius = 0.2f;
   place_cubes(30, kCubeRadius, physics, cube_ids, cube_activities);
-  std::vector<Pose> cube_poses{cube_ids.size(), Pose{}};
 
   Renderer renderer;
+
+  std::vector<CubeRenderer::Instance> cube_instances{cube_ids.size() + 1};
 
   u64 last_frame = 0;
   u64 previous_time = 0;
@@ -279,13 +274,22 @@ void run() {
 
     const auto player_pose = physics.get_interpolated_pose(player_id);
     camera.target = player_pose.position;
+    auto& player_instance = cube_instances.back();
+    player_instance.position = player_pose.position;
+    player_instance.rotation = player_pose.rotation;
+    player_instance.activity = player_activity;
+    player_instance.size = kPlayerCubeRadius;
 
-    for (int i = 0; i < cube_poses.size(); ++i) {
-      cube_poses[i] = physics.get_interpolated_pose(cube_ids[i]);
+    for (int i = 0; i < cube_instances.size() - 1; ++i) {
+      const auto pose = physics.get_interpolated_pose(cube_ids[i]);
+
+      cube_instances[i].position = pose.position;
+      cube_instances[i].rotation = pose.rotation;
+      cube_instances[i].activity = cube_activities[i];
+      cube_instances[i].size = kCubeRadius;
     }
 
-    renderer.draw(ground_plane, player_pose, player_activity, kPlayerCubeRadius,
-                  cube_poses, cube_activities, kCubeRadius, camera);
+    renderer.draw(ground_plane, cube_instances, camera);
 
     imgui.draw();
 

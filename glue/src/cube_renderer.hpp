@@ -10,21 +10,30 @@
 namespace glue {
 class CubeRenderer {
  public:
+  // TODO(vkon): pack this down
+  // size and activity can easily fit in 32 bits
+  struct Instance {
+    vec3 position;
+    f32 size;
+    quat rotation;
+    f32 activity;
+  };
+
+  static constexpr u32 kMaxInstances = 4096;
+
   CubeRenderer(
       const gfx::UniformBlock<uniforms::ViewProjection>& view_projection_block,
       const gfx::UniformBlock<uniforms::Lighting>& lighting_block);
 
-  void draw(const Pose& pose, float width, float activity);
+  void draw(std::span<Instance> instances);
 
  private:
   gfx::VertexBuffer vbo_;
   gfx::ElementBuffer<GLubyte> ebo_;
   gfx::VertexArray vao_;
   gfx::ShaderProgram shader_;
-  GLint model_uniform_;
-  GLint scale_uniform_;
-  GLint activity_uniform_;
   i32 cube_index_count_;
+  gfx::VertexBuffer instance_buffer_;
 };
 
 }  // namespace glue

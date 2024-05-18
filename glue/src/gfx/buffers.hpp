@@ -29,6 +29,12 @@ struct TypedBufferObject : public BufferObject {
     glBufferData(Target, data.size_bytes(), data.data(), usage);
   }
 
+  void init_to_size(GLsizei size, GLenum usage) {
+    assert(usage == GL_STATIC_DRAW || usage == GL_DYNAMIC_DRAW ||
+           usage == GL_STREAM_DRAW);
+    glBufferData(Target, size, nullptr, usage);
+  }
+
  protected:
   static GLuint create_buffer() {
     GLuint buffer;
