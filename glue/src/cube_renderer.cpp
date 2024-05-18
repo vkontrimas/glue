@@ -80,10 +80,26 @@ layout(location = 5) in float inst_activity;
 out vec3 vert_normal;
 out float activity_level;
 
+vec4 quat_mult(vec4 left, vec4 right) {
+  return vec4(
+    cross(left.xyz, right.xyz) + right.w * left.xyz + left.w * right.xyz, 
+    left.w * right.w - dot(left.xyz, right.xyz)
+  );
+}
+
+vec4 quat_conjugate(vec4 quat) {
+  return vec4(-quat.xyz, quat.w);
+}
+
+vec4 quat_rotate_vec(vec4 quat, vec4 vector) {
+  vec4 conj = quat_conjugate(quat);
+  return quat_mult(quat, quat_mult(vector, conj));
+}
+
 void main() {
   activity_level = inst_activity;
-  vert_normal = normal;
-  vec4 vertex_position = vec4(position * inst_scale + inst_position, 1.0);
+  vert_normal = quat_rotate_vec(inst_rotation, vec4(normal, 1.0)).xyz;
+  vec4 vertex_position = vec4(quat_rotate_vec(inst_rotation, vec4(position, 1.0)).xyz * inst_scale + inst_position, 1.0);
   gl_Position = projection_matrix * view_matrix * vertex_position;
 }
 )shader";
