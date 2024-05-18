@@ -142,4 +142,9 @@ void JoltPhysicsEngine::add_impulse(ObjectID id, const vec3& impulse) {
   body_interface.AddImpulse(backend_->get_body_id(id), from_glm(impulse));
 }
 
+void JoltPhysicsEngine::add_force(ObjectID id, const vec3& force) {
+  auto& body_interface = backend_->physics_system().GetBodyInterface();
+  body_interface.AddForce(backend_->get_body_id(id), from_glm(force));
+}
+
 }  // namespace glue::physics

@@ -49,6 +49,7 @@ class BasePhysicsEngine {
 
   virtual void add_torque(ObjectID id, const vec3& axis, f32 torque) = 0;
   virtual void add_impulse(ObjectID id, const vec3& impulse) = 0;
+  virtual void add_force(ObjectID id, const vec3& force) = 0;
 
   using OnCollisionEnterCallback = void(ObjectID);
   virtual void on_collision_enter(

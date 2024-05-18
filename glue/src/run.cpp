@@ -270,6 +270,9 @@ void run() {
         physics.add_torque(
             player_id, player_move_input.torque_axis(camera.position_rel.yaw),
             5000.0f);
+        physics.add_force(player_id, player_move_input.movement_direction(
+                                         camera.position_rel.yaw) *
+                                         1250.0f);
       }
     });
 

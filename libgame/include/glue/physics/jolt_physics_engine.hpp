@@ -18,6 +18,7 @@ class JoltPhysicsEngine final : public BasePhysicsEngine {
 
   virtual void add_torque(ObjectID id, const vec3& axis, f32 force) override;
   virtual void add_impulse(ObjectID id, const vec3& impulse) override;
+  virtual void add_force(ObjectID id, const vec3& force) override;
 
   virtual void on_collision_enter(
       ObjectID id,
