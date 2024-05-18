@@ -7,11 +7,6 @@ list(INSERT CMAKE_MODULE_PATH 0 "${PROJECT_SOURCE_DIR}/cmake")
 option(GLUE_BUILD_TESTS "Build tests" ON)
 
 # Third party libs
-if (GLUE_BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(third_party/googletest-1.14.0)
-endif()
-
 add_subdirectory(third_party/zlib-1.3.1)
 add_subdirectory(third_party/glm-0.9.9.8)
 add_subdirectory(third_party/SDL2-2.28.5)
@@ -20,6 +15,12 @@ add_subdirectory(third_party/imgui-v1.90-docking)
 add_subdirectory(third_party/glog-0.7.0)
 add_subdirectory(third_party/stb_image-2.29)
 add_subdirectory(third_party/JoltPhysics-5.0.0/Build)
+add_subdirectory(third_party/assimp-5.4.1)
+
+if (GLUE_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(third_party/googletest-1.14.0)
+endif()
 
 # Common typedefs, header-only utilities
 add_library(common OBJECT libcommon/src/objects/id.cpp)
