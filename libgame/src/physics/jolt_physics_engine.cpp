@@ -26,20 +26,52 @@ JoltPhysicsEngine::~JoltPhysicsEngine() = default;
 void JoltPhysicsEngine::step() {
   backend_->update(timestep(), 1);
   process_on_collision_enter_subscriptions();
+  process_on_become_active_subscriptions();
+  process_on_become_inactive_subscriptions();
 }
 
 void JoltPhysicsEngine::process_on_collision_enter_subscriptions() {
-  for (auto& pair : on_collision_enter_subscriptions_) {
+  for (auto& pair : subscriptions_) {
     const auto body_id = backend_->get_body_id(pair.first);
     backend_->contact_listener().process_on_contact_added_queue(
         body_id, [&](JPH::BodyID other) {
           const auto other_object_id = backend_->get_object_id(other);
-          for (auto& f : pair.second) {
+          for (auto& f : pair.second.on_collision_enter) {
             f(other_object_id);
           }
         });
     backend_->contact_listener().clear_on_contact_added_queue(body_id);
   }
+}
+
+void JoltPhysicsEngine::process_on_become_active_subscriptions() {
+  backend_->activation_listener().process_active_queue(
+      [&](JPH::BodyID body_id) {
+        const auto object_id = backend_->get_object_id(body_id);
+        auto it = subscriptions_.find(object_id);
+        if (it == std::end(subscriptions_)) {
+          return;
+        }
+        for (auto& f : it->second.on_become_active) {
+          f();
+        }
+      });
+  backend_->activation_listener().clear_active_queue();
+}
+
+void JoltPhysicsEngine::process_on_become_inactive_subscriptions() {
+  backend_->activation_listener().process_inactive_queue(
+      [&](JPH::BodyID body_id) {
+        const auto object_id = backend_->get_object_id(body_id);
+        auto it = subscriptions_.find(object_id);
+        if (it == std::end(subscriptions_)) {
+          return;
+        }
+        for (auto& f : it->second.on_become_inactive) {
+          f();
+        }
+      });
+  backend_->activation_listener().clear_inactive_queue();
 }
 
 void JoltPhysicsEngine::subscribe_on_collision_enter(ObjectID id) {

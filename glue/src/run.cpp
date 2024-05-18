@@ -166,6 +166,12 @@ void run() {
       player_jump_count = 0;
     }
   });
+  physics.on_become_active(player_id,
+                           []() { LOG(INFO) << "player is active now!"; });
+  physics.on_become_inactive(player_id,
+                             []() { LOG(INFO) << "player is INACTIVE now!"; });
+  physics.on_become_inactive(player_id,
+                             []() { LOG(INFO) << "second callback"; });
 
   std::vector<ObjectID> cube_ids;
   constexpr float kCubeRadius = 0.2f;

@@ -14,6 +14,7 @@ JoltPhysicsBackend::JoltPhysicsBackend(u32 max_rigidbodies, u32 mutex_count,
                        object_vs_broad_phase_layer_filter_,
                        object_layer_pair_filter_);
   physics_system_.SetContactListener(&contact_listener_);
+  physics_system_.SetBodyActivationListener(&activation_listener_);
 }
 
 void JoltPhysicsBackend::update(f32 timestep, i32 collision_steps) {

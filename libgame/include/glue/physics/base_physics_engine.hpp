@@ -54,6 +54,13 @@ class BasePhysicsEngine {
   virtual void on_collision_enter(
       ObjectID id, std::function<OnCollisionEnterCallback> f) = 0;
 
+  using OnActiveCallback = void();
+  using OnInactiveCallback = void();
+  virtual void on_become_active(ObjectID id,
+                                std::function<OnActiveCallback> f) = 0;
+  virtual void on_become_inactive(ObjectID id,
+                                  std::function<OnInactiveCallback> f) = 0;
+
   /*
    * In the future: investigate more efficient ways to process objects in
    * batches!

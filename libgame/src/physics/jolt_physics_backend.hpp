@@ -12,6 +12,7 @@
 #include <glue/types.hpp>
 #include <thread>
 
+#include "jolt_activation_listener.hpp"
 #include "jolt_contact_listener.hpp"
 #include "jolt_factory_singleton_instance.hpp"
 #include "layers.hpp"
@@ -36,6 +37,7 @@ class JoltPhysicsBackend {
 
   JPH::PhysicsSystem& physics_system() { return physics_system_; }
   JoltContactListener& contact_listener() { return contact_listener_; }
+  JoltActivationListener& activation_listener() { return activation_listener_; }
 
  private:
   JPHFactorySingletonInstance factory_singleton_instance_;
@@ -46,6 +48,7 @@ class JoltPhysicsBackend {
   ObjectVsBroadPhaseLayerFilterImpl object_vs_broad_phase_layer_filter_;
   JPH::PhysicsSystem physics_system_;
   JoltContactListener contact_listener_;
+  JoltActivationListener activation_listener_;
   std::unordered_map<ObjectID, JPH::BodyID> object_id_to_body_id_;
   std::unordered_map<JPH::BodyID, ObjectID> body_id_to_object_id_;
 };

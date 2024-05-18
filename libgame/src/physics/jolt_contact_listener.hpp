@@ -48,6 +48,12 @@ class JoltContactListener : public JPH::ContactListener {
     it->second.clear();
   }
 
+ private:
+  // mutex needed as OnContactAdded could be called from any thread!
+  std::mutex on_contact_added_lock_;
+  std::unordered_map<JPH::BodyID, std::vector<JPH::BodyID>>
+      on_contact_added_subscriptions_;
+
   void on_contact_added_process_pair(JPH::BodyID target, JPH::BodyID other) {
     const std::lock_guard guard{on_contact_added_lock_};
     auto it = on_contact_added_subscriptions_.find(target);
@@ -56,11 +62,5 @@ class JoltContactListener : public JPH::ContactListener {
     }
     it->second.push_back(other);
   }
-
- private:
-  // mutex needed as OnContactAdded could be called from any thread!
-  std::mutex on_contact_added_lock_;
-  std::unordered_map<JPH::BodyID, std::vector<JPH::BodyID>>
-      on_contact_added_subscriptions_;
 };
 }  // namespace glue::physics
