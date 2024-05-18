@@ -37,12 +37,16 @@ layout(std140) uniform lighting_block {
   vec4 sun_light;
 };
 
+uniform float activity_level;
+
 in vec3 vert_normal;
 
 out vec4 frag_color;
 
 void main() {
-  frag_color = ambient_light + dot(vert_normal, sun_direction.xyz) * sun_light;
+  vec4 albedo = mix(vec4(0.95, 0.95, 0.95, 1.0), vec4(0.909803, 0.282352, 0.33333, 1.0), activity_level);
+  vec4 light = ambient_light + dot(vert_normal, sun_direction.xyz) * sun_light;
+  frag_color = light * albedo;
 }
 )shader";
 }  // namespace
@@ -57,6 +61,7 @@ CubeRenderer::CubeRenderer(
   lighting_block.connect(shader_, "lighting_block");
   model_uniform_ = shader_.uniform_location("model_matrix");
   scale_uniform_ = shader_.uniform_location("cube_scale");
+  activity_uniform_ = shader_.uniform_location("activity_level");
 
   {
     GLuint buffers[2];
@@ -150,13 +155,14 @@ CubeRenderer::CubeRenderer(
                         (GLvoid*)sizeof(vec3));
 }
 
-void CubeRenderer::draw(const Pose& pose, float width) {
+void CubeRenderer::draw(const Pose& pose, float width, float activity) {
   glUseProgram(*shader_);
 
   const mat4 model_matrix = pose.model_matrix();
   glUniformMatrix4fv(model_uniform_, 1, GL_FALSE, glm::value_ptr(model_matrix));
 
   glUniform1f(scale_uniform_, width);
+  glUniform1f(activity_uniform_, activity);
 
   glBindVertexArray(*vao_);
   glDrawElements(GL_TRIANGLES, 3 * 2 * 6, ebo_.Type, 0);

@@ -19,9 +19,10 @@ class Renderer {
         cube_renderer_{view_projection_uniforms_, lighting_uniforms_},
         plane_renderer_{view_projection_uniforms_, lighting_uniforms_} {}
 
-  void draw(const Plane& plane, const Pose& player_cube,
+  void draw(const Plane& plane, const Pose& player_cube, f32 player_activity,
             float player_cube_radius, const std::vector<Pose>& cubes,
-            float cube_radius, const OrbitCamera& camera) {
+            const std::vector<f32>& cube_activities, float cube_radius,
+            const OrbitCamera& camera) {
     {
       view_projection_uniforms_.bind_for_write();
       view_projection_uniforms_.set({camera});
@@ -35,9 +36,10 @@ class Renderer {
     glClearColor(0.0f, 0.4f, 0.6f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    cube_renderer_.draw(player_cube, player_cube_radius);
-    for (const auto& cube : cubes) {
-      cube_renderer_.draw(cube, cube_radius);
+    cube_renderer_.draw(player_cube, player_cube_radius, player_activity);
+    CHECK(cubes.size() == cube_activities.size());
+    for (int i = 0; i < cubes.size(); ++i) {
+      cube_renderer_.draw(cubes[i], cube_radius, cube_activities[i]);
     }
     plane_renderer_.draw(plane);
   }
@@ -51,20 +53,31 @@ class Renderer {
 
 void place_cubes(int rows, float cube_width,
                  physics::BasePhysicsEngine& physics,
-                 std::vector<ObjectID>& cube_ids) {
-  cube_ids.reserve(rows * rows);
+                 std::vector<ObjectID>& cube_ids,
+                 std::vector<f32>& cube_activities) {
+  cube_ids.resize(rows * rows, ObjectID::random());
+  cube_activities.resize(rows * rows, 0);
 
   float spacing = cube_width * 6.0f;
   vec3 start =
       -1 * spacing * 0.5f * vec3{rows, 0, rows} + vec3{0, cube_width, 0};
+  i32 cube_index = 0;
   for (int i = 0; i < rows; ++i) {
     for (int j = 0; j < rows; ++j) {
       vec3 position = start + spacing * vec3{i, 0, j};
 
       const auto id = ObjectID::random();
-      cube_ids.emplace_back(id);
+      cube_ids[cube_index] = id;
+      cube_activities[cube_index] = 0.0f;
       physics.add_dynamic_cube(id, {position, glm::identity<quat>()},
                                cube_width, false);
+      physics.on_become_active(id, [&cube_activities, cube_index]() {
+        cube_activities[cube_index] = 1.0f;
+      });
+      physics.on_become_inactive(id, [&cube_activities, cube_index]() {
+        cube_activities[cube_index] = 0.0f;
+      });
+      cube_index++;
     }
   }
 }
@@ -161,21 +174,19 @@ void run() {
   MoveInput player_move_input;
   constexpr int kPlayerMaxJumps = 5;
   int player_jump_count = 0;
+  float player_activity = 1.0f;
   physics.on_collision_enter(player_id, [&](ObjectID other) {
     if (other == ground_id) {
       player_jump_count = 0;
     }
   });
-  physics.on_become_active(player_id,
-                           []() { LOG(INFO) << "player is active now!"; });
-  physics.on_become_inactive(player_id,
-                             []() { LOG(INFO) << "player is INACTIVE now!"; });
-  physics.on_become_inactive(player_id,
-                             []() { LOG(INFO) << "second callback"; });
+  physics.on_become_active(player_id, [&]() { player_activity = 1.0f; });
+  physics.on_become_inactive(player_id, [&]() { player_activity = 0.0f; });
 
   std::vector<ObjectID> cube_ids;
+  std::vector<float> cube_activities;
   constexpr float kCubeRadius = 0.2f;
-  place_cubes(30, kCubeRadius, physics, cube_ids);
+  place_cubes(30, kCubeRadius, physics, cube_ids, cube_activities);
   std::vector<Pose> cube_poses{cube_ids.size(), Pose{}};
 
   Renderer renderer;
@@ -269,8 +280,8 @@ void run() {
       cube_poses[i] = physics.get_interpolated_pose(cube_ids[i]);
     }
 
-    renderer.draw(ground_plane, player_pose, kPlayerCubeRadius, cube_poses,
-                  kCubeRadius, camera);
+    renderer.draw(ground_plane, player_pose, player_activity, kPlayerCubeRadius,
+                  cube_poses, cube_activities, kCubeRadius, camera);
 
     imgui.draw();
 
