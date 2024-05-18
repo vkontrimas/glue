@@ -23,7 +23,29 @@ JoltPhysicsEngine::JoltPhysicsEngine(f32 timestep)
 
 JoltPhysicsEngine::~JoltPhysicsEngine() = default;
 
-void JoltPhysicsEngine::step() { backend_->update(timestep(), 1); }
+void JoltPhysicsEngine::step() {
+  backend_->update(timestep(), 1);
+  process_on_collision_enter_subscriptions();
+}
+
+void JoltPhysicsEngine::process_on_collision_enter_subscriptions() {
+  for (auto& pair : on_collision_enter_subscriptions_) {
+    const auto body_id = backend_->get_body_id(pair.first);
+    backend_->contact_listener().process_on_contact_added_queue(
+        body_id, [&](JPH::BodyID other) {
+          const auto other_object_id = backend_->get_object_id(other);
+          for (auto& f : pair.second) {
+            f(other_object_id);
+          }
+        });
+    backend_->contact_listener().clear_on_contact_added_queue(body_id);
+  }
+}
+
+void JoltPhysicsEngine::subscribe_on_collision_enter(ObjectID id) {
+  const auto body_id = backend_->get_body_id(id);
+  backend_->contact_listener().subscribe_on_contact_added(body_id);
+}
 
 void JoltPhysicsEngine::read_pose(ObjectID object, Pose& pose) {
   const auto body_id = backend_->get_body_id(object);
@@ -87,4 +109,5 @@ void JoltPhysicsEngine::add_impulse(ObjectID id, const vec3& impulse) {
   auto& body_interface = backend_->physics_system().GetBodyInterface();
   body_interface.AddImpulse(backend_->get_body_id(id), from_glm(impulse));
 }
+
 }  // namespace glue::physics

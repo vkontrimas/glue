@@ -1,9 +1,11 @@
 #pragma once
 
 #include <concepts>
+#include <functional>
 #include <glue/types.hpp>
 
 namespace glue::physics {
+
 template <typename T>
 concept PrePhysicsUpdateCallback = std::invocable<T>;
 
@@ -48,9 +50,9 @@ class BasePhysicsEngine {
   virtual void add_torque(ObjectID id, const vec3& axis, f32 torque) = 0;
   virtual void add_impulse(ObjectID id, const vec3& impulse) = 0;
 
-  // In the future:
-  // on_collision_enter() allows registering callback via lambda for object ID
-  // on_collision_exit() likewise
+  using OnCollisionEnterCallback = void(ObjectID);
+  virtual void on_collision_enter(
+      ObjectID id, std::function<OnCollisionEnterCallback> f) = 0;
 
   /*
    * In the future: investigate more efficient ways to process objects in

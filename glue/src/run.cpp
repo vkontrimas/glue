@@ -143,8 +143,9 @@ void run() {
 
   auto physics = create_physics_engine();
 
+  const auto ground_id = ObjectID::random();
   const Plane ground_plane{{}, 3000.0f};
-  physics.add_static_plane(ObjectID::random(), ground_plane);
+  physics.add_static_plane(ground_id, ground_plane);
 
   OrbitCamera camera;
 
@@ -160,6 +161,11 @@ void run() {
   MoveInput player_move_input;
   constexpr int kPlayerMaxJumps = 5;
   int player_jump_count = 0;
+  physics.on_collision_enter(player_id, [&](ObjectID other) {
+    if (other == ground_id) {
+      player_jump_count = 0;
+    }
+  });
 
   std::vector<ObjectID> cube_ids;
   constexpr float kCubeRadius = 0.2f;
@@ -206,7 +212,7 @@ void run() {
 
     imgui.start_new_frame();
 
-    ImGui::SetNextWindowSize({300, 100}, ImGuiCond_Always);
+    ImGui::SetNextWindowSize({300, 700}, ImGuiCond_Always);
     ImGui::SetNextWindowPos({0, 0}, ImGuiCond_Always);
     if (ImGui::Begin("FPS", nullptr,
                      ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove |
@@ -218,6 +224,7 @@ void run() {
                           1.0f / frame_delta_time)) {
         ImGui::Text("Physics %03.3f ms (%2.0f UPS)",
                     physics.timestep() * 1000.0f, 1.0f / physics.timestep());
+        ImGui::Text("Jumps: %d", player_jump_count);
         ImGui::Separator();
         if (ImGui::Checkbox("V-sync", &vsync)) {
           if (vsync) {
