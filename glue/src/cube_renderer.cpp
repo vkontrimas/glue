@@ -1,7 +1,66 @@
 #include "cube_renderer.hpp"
 
+#include <assimp/mesh.h>
+#include <assimp/scene.h>
+
+#include <assimp/Importer.hpp>
+#include <vector>
+
 namespace glue {
 namespace {
+struct CubeMesh {
+  struct Vertex {
+    vec3 position;
+    vec3 normal;
+  };
+
+  std::vector<Vertex> vertices;
+  std::vector<u8> indices;
+
+  static CubeMesh load(const char* filename) {
+    CubeMesh mesh;
+
+    Assimp::Importer importer;
+
+    const aiScene* scene = importer.ReadFile(filename, 0);
+    CHECK(scene) << "failed to load mesh";
+    CHECK(scene->mNumMeshes == 1) << "should have exactly one mesh";
+
+    const aiMesh* loaded_mesh = scene->mMeshes[0];
+    CHECK(loaded_mesh) << "mesh is null";
+    CHECK(loaded_mesh->mVertices) << "mesh has no vertices";
+    CHECK(loaded_mesh->mNormals) << "mesh has no vertices";
+    CHECK(loaded_mesh->mFaces && loaded_mesh->mFaces->mIndices)
+        << "mesh has no triangles";
+
+    mesh.vertices.resize(loaded_mesh->mNumVertices);
+    for (int i = 0; i < mesh.vertices.size(); ++i) {
+      const aiVector3d& position = loaded_mesh->mVertices[i];
+      mesh.vertices[i].position =
+          vec3{static_cast<float>(position.x), static_cast<float>(position.y),
+               static_cast<float>(position.z)};
+
+      const aiVector3d& normal = loaded_mesh->mNormals[i];
+      mesh.vertices[i].normal =
+          vec3{static_cast<float>(normal.x), static_cast<float>(normal.y),
+               static_cast<float>(normal.z)};
+    }
+
+    mesh.indices.reserve(36);
+    for (int face_index = 0; face_index < loaded_mesh->mNumFaces;
+         ++face_index) {
+      for (int index_index = 0;
+           index_index < loaded_mesh->mFaces[face_index].mNumIndices;
+           ++index_index) {
+        mesh.indices.push_back(static_cast<u8>(
+            loaded_mesh->mFaces[face_index].mIndices[index_index]));
+      }
+    }
+
+    return mesh;
+  }
+};
+
 constexpr auto kVertexShader = R"shader(
 #version 410 core
 
@@ -80,78 +139,20 @@ CubeRenderer::CubeRenderer(
 
   glBindVertexArray(*vao_);
 
-  struct Vertex {
-    vec3 position;
-    vec3 normal;
-  };
-
-  std::array<Vertex, 24> vertices{{
-      // Bottom face (y = -1.0f)
-      {{-1.0f, -1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}},
-      {{1.0f, -1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}},
-      {{1.0f, -1.0f, -1.0f}, {0.0f, -1.0f, 0.0f}},
-      {{-1.0f, -1.0f, -1.0f}, {0.0f, -1.0f, 0.0f}},
-
-      // Top face (y = 1.0f)
-      {{-1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
-      {{1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
-      {{1.0f, 1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
-      {{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
-
-      // Front face (z = 1.0f)
-      {{-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-      {{1.0f, -1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-      {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-      {{-1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-
-      // Back face (z = -1.0f)
-      {{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f, -1.0f}},
-      {{1.0f, -1.0f, -1.0f}, {0.0f, 0.0f, -1.0f}},
-      {{1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, -1.0f}},
-      {{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, -1.0f}},
-
-      // Left face (x = -1.0f)
-      {{-1.0f, -1.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}},
-      {{-1.0f, -1.0f, -1.0f}, {-1.0f, 0.0f, 0.0f}},
-      {{-1.0f, 1.0f, -1.0f}, {-1.0f, 0.0f, 0.0f}},
-      {{-1.0f, 1.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}},
-
-      // Right face (x = 1.0f)
-      {{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
-      {{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}},
-      {{1.0f, 1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}},
-      {{1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
-  }};
-
-  std::array<GLubyte, 36> triangles{// Bottom face (y = -1.0f)
-                                    0, 1, 2, 2, 3, 0,
-
-                                    // Top face (y = 1.0f)
-                                    4, 5, 6, 6, 7, 4,
-
-                                    // Front face (z = 1.0f)
-                                    8, 9, 10, 10, 11, 8,
-
-                                    // Back face (z = -1.0f)
-                                    12, 13, 14, 14, 15, 12,
-
-                                    // Left face (x = -1.0f)
-                                    16, 17, 18, 18, 19, 16,
-
-                                    // Right face (x = 1.0f)
-                                    20, 21, 22, 22, 23, 20};
+  auto mesh = CubeMesh::load("assets/cube.glb");
+  cube_index_count_ = mesh.indices.size();
 
   vbo_.bind();
-  vbo_.data(std::span{vertices}, GL_STATIC_DRAW);
+  vbo_.data(std::span{mesh.vertices}, GL_STATIC_DRAW);
 
   ebo_.bind();
-  ebo_.data(std::span{triangles}, GL_STATIC_DRAW);
+  ebo_.data(std::span{mesh.indices}, GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(CubeMesh::Vertex), 0);
 
   glEnableVertexAttribArray(1);
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(CubeMesh::Vertex),
                         (GLvoid*)sizeof(vec3));
 }
 
@@ -165,7 +166,7 @@ void CubeRenderer::draw(const Pose& pose, float width, float activity) {
   glUniform1f(activity_uniform_, activity);
 
   glBindVertexArray(*vao_);
-  glDrawElements(GL_TRIANGLES, 3 * 2 * 6, ebo_.Type, 0);
+  glDrawElements(GL_TRIANGLES, cube_index_count_, ebo_.Type, 0);
 }
 
 }  // namespace glue

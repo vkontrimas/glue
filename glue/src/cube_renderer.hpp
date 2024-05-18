@@ -24,6 +24,7 @@ class CubeRenderer {
   GLint model_uniform_;
   GLint scale_uniform_;
   GLint activity_uniform_;
+  i32 cube_index_count_;
 };
 
 }  // namespace glue

@@ -64,7 +64,7 @@ add_executable(
     glue/src/plane_renderer.cpp
 )
 target_include_directories(glue PRIVATE glue/include)
-target_link_libraries(glue common game SDL2 glad imgui stb_image)
+target_link_libraries(glue common game SDL2 glad imgui stb_image assimp)
 target_compile_features(glue PUBLIC cxx_std_20)
 
 if (APPLE)
