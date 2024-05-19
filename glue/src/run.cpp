@@ -232,13 +232,18 @@ void run() {
                          ImGuiWindowFlags_NoCollapse |
                          ImGuiWindowFlags_NoDecoration |
                          ImGuiWindowFlags_NoNavInputs)) {
-      if (ImGui::TreeNode("Settings", "%03.3f ms (%3.0f FPS)",
+      if (ImGui::TreeNode("Data", "%03.3f ms (%3.0f FPS)",
                           frame_delta_time * 1000.0f,
                           1.0f / frame_delta_time)) {
         ImGui::Text("Physics %03.3f ms (%2.0f UPS)",
                     physics.timestep() * 1000.0f, 1.0f / physics.timestep());
         ImGui::Text("Jumps: %d", player_jump_count);
-        ImGui::Separator();
+
+        ImGui::TreePop();
+        ImGui::Spacing();
+      }
+
+      if (ImGui::TreeNode("settings")) {
         if (ImGui::Checkbox("V-sync", &vsync)) {
           if (vsync) {
             SDL_GL_SetSwapInterval(1);
