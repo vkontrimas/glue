@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_sdl2.h>
+#include <implot.h>
 
 namespace glue::imgui {
 class ImGuiContext {
@@ -11,6 +12,8 @@ class ImGuiContext {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot::CreateContext();
+
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |=
         ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
@@ -46,6 +49,7 @@ class ImGuiContext {
   ~ImGuiContext() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
   }
 

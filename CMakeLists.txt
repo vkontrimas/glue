@@ -12,6 +12,7 @@ add_subdirectory(third_party/glm-0.9.9.8)
 add_subdirectory(third_party/SDL2-2.28.5)
 add_subdirectory(third_party/glad)
 add_subdirectory(third_party/imgui-v1.90-docking)
+add_subdirectory(third_party/implot-0.16)
 add_subdirectory(third_party/glog-0.7.0)
 add_subdirectory(third_party/stb_image-2.29)
 add_subdirectory(third_party/JoltPhysics-5.0.0/Build)
@@ -64,7 +65,7 @@ add_executable(
     glue/src/plane_renderer.cpp
 )
 target_include_directories(glue PRIVATE glue/include)
-target_link_libraries(glue common game SDL2 glad imgui stb_image assimp)
+target_link_libraries(glue common game SDL2 glad imgui implot stb_image assimp)
 target_compile_features(glue PUBLIC cxx_std_20)
 
 if (APPLE)

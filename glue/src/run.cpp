@@ -192,6 +192,7 @@ void run() {
   u64 now = SDL_GetPerformanceCounter();
 
   bool show_imgui_demo = false;
+  bool show_implot_demo = false;
 
   bool vsync = true;
   SDL_GL_SetSwapInterval(1);
@@ -254,6 +255,7 @@ void run() {
 
         ImGui::Separator();
         ImGui::Checkbox("ImGui demo window", &show_imgui_demo);
+        ImGui::Checkbox("ImPlot demo window", &show_implot_demo);
 
         ImGui::TreePop();
         ImGui::Spacing();
@@ -264,6 +266,10 @@ void run() {
 
     if (show_imgui_demo) {
       ImGui::ShowDemoWindow(&show_imgui_demo);
+    }
+
+    if (show_implot_demo) {
+      ImPlot::ShowDemoWindow(&show_implot_demo);
     }
 
     physics.update(frame_delta_time, [&]() {
