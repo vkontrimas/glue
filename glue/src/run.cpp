@@ -242,6 +242,16 @@ void run() {
   static_assert(horizontal_lines.size() == line_labels.size());
 
   bool vsync = true;
+
+  std::array<std::pair<double, const char*>, 5> timestep_limits{{
+      {1.0 / 60.0, "60"},
+      {1.0 / 90.0, "90"},
+      {1.0 / 120.0, "120"},
+      {1.0 / 240.0, "240"},
+      {1.0 / 1000.0, "Unlimited"},
+  }};
+  int selected_timestep = 3;
+
   SDL_GL_SetSwapInterval(1);
 
   bool is_running = true;
@@ -347,6 +357,13 @@ void run() {
             SDL_GL_SetSwapInterval(0);
           }
         }
+        ImGui::SameLine();
+        ImGui::BeginDisabled(vsync);
+        ImGui::SliderInt(
+            "FPS", &selected_timestep, 0, timestep_limits.size() - 1,
+            timestep_limits[selected_timestep].second,
+            ImGuiSliderFlags_NoInput | ImGuiSliderFlags_AlwaysClamp);
+        ImGui::EndDisabled();
 
         ImGui::Separator();
         ImGui::Checkbox("ImGui demo window", &show_imgui_demo);
@@ -402,6 +419,22 @@ void run() {
     imgui.draw();
 
     render_times.log(render_timer.elapsed_ms<f64>());
+
+    const bool unlimited_frames =
+        selected_timestep == timestep_limits.size() - 1;
+    const f64 target_timestep_ms =
+        timestep_limits[selected_timestep].first * 1000.0;
+    const int sleep_step_ms = 1;
+    const int spinlock_time_ms = 4;
+    const f64 margin_ms = 0.4;
+
+    while (!vsync && !unlimited_frames &&
+           frame_timer.elapsed_ms<f64>() < target_timestep_ms - margin_ms) {
+      if (target_timestep_ms - frame_timer.elapsed_ms<f64>() >
+          spinlock_time_ms) {
+        SDL_Delay(sleep_step_ms);
+      }
+    }
 
     SDL_GL_SwapWindow(window.get());
     if (!window_shown) {
