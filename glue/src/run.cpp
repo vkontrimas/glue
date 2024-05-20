@@ -1,3 +1,5 @@
+#include "run.hpp"
+
 #include <SDL.h>
 
 #include <array>
@@ -145,9 +147,11 @@ class MoveInput {
 };
 }  // namespace
 
-void run() {
+void run(const RunOptions& options) {
   bool window_shown = false;
-  auto window = create_window("Glue", 1280, 720);
+  auto window = create_window("Glue", options.window_position_x,
+                              options.window_position_y, options.window_width,
+                              options.window_height);
   auto gl_context = init_gl(window.get());
   glue::imgui::ImGuiContext imgui{window.get(), gl_context.get()};
 
@@ -414,6 +418,12 @@ void run() {
       cube_instances[i].size = kCubeRadius;
     }
 
+    int render_width, render_height;
+    SDL_GetWindowSizeInPixels(window.get(), &render_width, &render_height);
+    camera.params.aspect =
+        static_cast<f32>(render_width) / static_cast<f32>(render_height);
+
+    glViewport(0, 0, render_width, render_height);
     renderer.draw(ground_plane, cube_instances, camera);
 
     imgui.draw();

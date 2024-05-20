@@ -1,0 +1,3 @@
+add_library(CLI11 INTERFACE)
+target_include_directories(CLI11 INTERFACE include)
+target_compile_features(CLI11 INTERFACE cxx_std_11)

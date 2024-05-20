@@ -11,7 +11,15 @@ struct SDLWindowDeleter {
   void operator()(SDL_Window* window) { SDL_DestroyWindow(window); }
 };
 
-inline auto create_window(const char* title, int width, int height) {
+inline auto create_window(const char* title, int pos_x, int pos_y, int width,
+                          int height) {
+  if (pos_x == -1) {
+    pos_x = SDL_WINDOWPOS_CENTERED;
+  }
+  if (pos_y == -1) {
+    pos_y = SDL_WINDOWPOS_CENTERED;
+  }
+
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
   // max opengl version on mac os
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -29,9 +37,10 @@ inline auto create_window(const char* title, int width, int height) {
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-  std::unique_ptr<SDL_Window, SDLWindowDeleter> window{SDL_CreateWindow(
-      title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height,
-      SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN)};
+  std::unique_ptr<SDL_Window, SDLWindowDeleter> window{
+      SDL_CreateWindow(title, pos_x, pos_y, width, height,
+                       SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL |
+                           SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE)};
   CHECK(window) << SDL_GetError();
 
   return window;
