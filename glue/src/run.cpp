@@ -1,10 +1,11 @@
 #include <SDL.h>
 
 #include <array>
+#include <glue/debug/timer.hpp>
 #include <glue/physics.hpp>
 
 #include "cube_renderer.hpp"
-#include "debug/frame_logger.hpp"
+#include "debug/data_logger.hpp"
 #include "imgui/imgui_context.hpp"
 #include "plane_renderer.hpp"
 #include "window.hpp"
@@ -196,13 +197,31 @@ void run() {
   bool show_imgui_demo = false;
   bool show_implot_demo = false;
 
-  struct FrameStats {
-    f64 frame_time;
-    f64 physics_time;
-    f64 render_time;
+  constexpr double kDataLogWindow = 2.0;
+  debug::DataLogger<double> frame_times{kDataLogWindow};
+  debug::DataLogger<double> render_times{kDataLogWindow};
+  debug::DataLogger<double> physics_times{kDataLogWindow};
+
+  std::vector<double> ys_buffer, xs_buffer;
+  const auto fill_buffers = [](const debug::DataLogger<double>& data,
+                               std::vector<double>& ys,
+                               std::vector<double>& xs) {
+    const auto count = data.count();
+    if (ys.size() < count) {
+      ys.resize(count);
+    }
+    if (xs.size() < count) {
+      xs.resize(count);
+    }
+
+    for (std::size_t i = 0; i < count; ++i) {
+      const auto& entry = data[i];
+      ys[i] = entry.data;
+      xs[i] = entry.time;
+    }
   };
-  debug::FrameLogger<FrameStats> frame_logger{2.0f};
-  constexpr f64 kYLimit = 1000.0 / 45.0;
+
+  constexpr f64 kYLimit = 1000.0 / 30.0;
   double frame_logger_y_axis = kYLimit;
   const std::array<f64, 6> horizontal_lines{{
       1000.0,
@@ -227,13 +246,12 @@ void run() {
 
   bool is_running = true;
   while (is_running) {
+    const debug::Timer frame_timer;
+
     previous_time = now;
     now = SDL_GetPerformanceCounter();
     f64 frame_delta_time = static_cast<f64>(now - previous_time) /
                            static_cast<f64>(SDL_GetPerformanceFrequency());
-
-    frame_logger.start_frame(static_cast<f64>(now - game_start_time) /
-                             static_cast<f64>(SDL_GetPerformanceFrequency()));
 
     SDL_Event event{};
     while (SDL_PollEvent(&event)) {
@@ -263,28 +281,29 @@ void run() {
                          ImGuiWindowFlags_NoCollapse |
                          ImGuiWindowFlags_NoDecoration |
                          ImGuiWindowFlags_NoNavInputs)) {
-      if (ImGui::TreeNode("Data", "%03.3lf ms (%3.0lf FPS)",
+      if (ImGui::TreeNode("GameData", "%03.3lf ms (%3.0lf FPS)",
                           frame_delta_time * 1000.0, 1.0 / frame_delta_time)) {
         if (ImPlot::BeginPlot("frame_stats", {-1, 140},
                               ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect |
                                   ImPlotFlags_NoTitle | ImPlotFlags_NoMenus |
                                   ImPlotFlags_NoMouseText)) {
           ImPlot::SetupAxes("s", "ms",
-                            ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoLabel |
-                                ImPlotAxisFlags_NoTickLabels,
+                            ImPlotAxisFlags_NoLabel |
+                                ImPlotAxisFlags_NoTickLabels |
+                                ImPlotAxisFlags_AutoFit,
                             ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_LockMin);
           ImPlot::SetupAxisFormat(ImAxis_Y1, "%g ms");
 
           ImPlot::SetupAxisLinks(ImAxis_Y1, nullptr, &frame_logger_y_axis);
 
-          ImPlot::SetupAxesLimits(-frame_logger.seconds(), 0.0, 0.0, kYLimit);
+          ImPlot::SetupAxesLimits(0.0, kDataLogWindow, 0.0, kYLimit);
           ImPlot::SetupLegend(
               ImPlotLocation_South,
               ImPlotLegendFlags_Horizontal | ImPlotLegendFlags_Outside);
 
           ImPlot::SetupAxis(ImAxis_Y2, nullptr,
                             ImPlotAxisFlags_AuxDefault |
-                                ImPlotAxisFlags_LockMin |
+
                                 ImPlotAxisFlags_NoMenus);
           ImPlot::SetupAxisTicks(ImAxis_Y2, horizontal_lines.data(),
                                  horizontal_lines.size(), line_labels.data(),
@@ -293,38 +312,22 @@ void run() {
                                   ImPlotCond_Always);
 
           ImPlot::SetAxes(ImAxis_X1, ImAxis_Y1);
+          fill_buffers(frame_times, ys_buffer, xs_buffer);
+          ImPlot::PlotLine("total", xs_buffer.data(), ys_buffer.data(),
+                           frame_times.count());
+          ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.4f);
+          ImPlot::PlotShaded("total", xs_buffer.data(), ys_buffer.data(),
+                             frame_times.count());
+          ImPlot::PopStyleVar();
 
-          ImPlot::PlotLineG(
-              "total",
-              [](int i, void* data) {
-                auto logger = (debug::FrameLogger<FrameStats>*)data;
-                return ImPlotPoint{logger->time(i),
-                                   (*logger)[i].frame_time * 1000.0};
-              },
-              &frame_logger, frame_logger.count() - 1, ImPlotLineFlags_Shaded);
+          fill_buffers(physics_times, ys_buffer, xs_buffer);
+          ImPlot::PlotLine("physics", xs_buffer.data(), ys_buffer.data(),
+                           physics_times.count());
 
-          ImPlot::PlotLineG(
-              "physics",
-              [](int i, void* data) {
-                auto logger = (debug::FrameLogger<FrameStats>*)data;
-                return ImPlotPoint{logger->time(i),
-                                   (*logger)[i].physics_time * 1000.0};
-              },
-              &frame_logger, frame_logger.count() - 1, ImPlotLineFlags_Shaded);
+          fill_buffers(render_times, ys_buffer, xs_buffer);
+          ImPlot::PlotLine("render", xs_buffer.data(), ys_buffer.data(),
+                           render_times.count());
 
-          ImPlot::PlotLineG(
-              "render",
-              [](int i, void* data) {
-                auto logger = (debug::FrameLogger<FrameStats>*)data;
-                return ImPlotPoint{logger->time(i),
-                                   (*logger)[i].render_time * 1000.0};
-              },
-              &frame_logger, frame_logger.count() - 1, ImPlotLineFlags_Shaded);
-
-          ImPlot::SetAxes(ImAxis_X1, ImAxis_Y2);
-          ImPlot::PlotInfLines("fps", horizontal_lines.data(),
-                               horizontal_lines.size(),
-                               ImPlotInfLinesFlags_Horizontal);
           ImPlot::EndPlot();
         }
 
@@ -364,8 +367,7 @@ void run() {
       ImPlot::ShowDemoWindow(&show_implot_demo);
     }
 
-    auto physics_start_time = SDL_GetPerformanceCounter();
-    physics.update(frame_delta_time, [&]() {
+    physics.update_timed(frame_delta_time, physics_times, [&]() {
       if (player_move_input.has_input()) {
         physics.add_torque(
             player_id, player_move_input.torque_axis(camera.position_rel.yaw),
@@ -375,12 +377,8 @@ void run() {
                                          1250.0f);
       }
     });
-    auto physics_end_time = SDL_GetPerformanceCounter();
-    frame_logger.current_frame().physics_time =
-        static_cast<f64>(physics_end_time - physics_start_time) /
-        static_cast<f64>(SDL_GetPerformanceFrequency());
 
-    auto render_start_time = SDL_GetPerformanceCounter();
+    const debug::Timer render_timer;
 
     const auto player_pose = physics.get_interpolated_pose(player_id);
     camera.target = player_pose.position;
@@ -403,10 +401,7 @@ void run() {
 
     imgui.draw();
 
-    auto render_end_time = SDL_GetPerformanceCounter();
-    frame_logger.current_frame().render_time =
-        static_cast<f64>(render_end_time - render_start_time) /
-        static_cast<f64>(SDL_GetPerformanceFrequency());
+    render_times.log(render_timer.elapsed_ms<f64>());
 
     SDL_GL_SwapWindow(window.get());
     if (!window_shown) {
@@ -414,10 +409,7 @@ void run() {
       SDL_ShowWindow(window.get());
     }
 
-    auto frame_end_time = SDL_GetPerformanceCounter();
-    frame_logger.current_frame().frame_time =
-        static_cast<f64>(frame_end_time - now) /
-        static_cast<f64>(SDL_GetPerformanceFrequency());
+    frame_times.log(frame_timer.elapsed_ms<f64>());
   }
 }
 }  // namespace glue

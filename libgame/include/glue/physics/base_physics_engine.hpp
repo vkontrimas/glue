@@ -1,7 +1,10 @@
 #pragma once
 
+#include <chrono>
 #include <concepts>
 #include <functional>
+#include <glue/debug/idata_logger.hpp>
+#include <glue/debug/timer.hpp>
 #include <glue/types.hpp>
 
 namespace glue::physics {
@@ -22,6 +25,23 @@ class BasePhysicsEngine {
       pre_update();
       step();
       read_back_poses(std::begin(objects_), std::end(objects_));
+    }
+  }
+
+  template <PrePhysicsUpdateCallback Fn>
+  void update_timed(
+      float frame_delta_time, debug::IDataLogger<f64>& update_time,
+      Fn pre_update = []() {}) {
+    time_since_past_pose_ += frame_delta_time;
+    while (time_since_past_pose_ >= timestep()) {
+      const debug::Timer timer;
+
+      time_since_past_pose_ -= timestep();
+      pre_update();
+      step();
+      read_back_poses(std::begin(objects_), std::end(objects_));
+
+      update_time.log(timer.elapsed_ms<f64>());
     }
   }
 
