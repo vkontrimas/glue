@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <glue/assert.hpp>
+#include <glue/collections/circular_buffer_iterator.hpp>
 #include <glue/types.hpp>
 #include <iterator>
 
@@ -10,69 +11,12 @@ namespace glue {
 template <typename T, std::size_t Capacity>
 class FixedCircularBuffer final {
  public:
-  template <typename TBuffer, typename TPtr, typename TRef>
-  class Iterator {
-   public:
-    using iterator_category =
-        std::bidirectional_iterator_tag;  // TODO: make this random_access
-    using difference_type = std::ptrdiff_t;
-    using value_type = T;
-    using pointer = TPtr;
-    using reference = TRef;
-
-    Iterator(TBuffer buffer, std::size_t index) noexcept
-        : buffer_{buffer}, index_{index} {}
-
-    reference operator*() { return *buffer_.get_ptr(index_); }
-    const reference operator*() const { return *buffer_.get_ptr(index_); }
-
-    pointer operator->() { return buffer_.get_ptr(index_); }
-    const pointer operator->() const { return buffer_.get_ptr(index_); }
-
-    Iterator& operator++() {
-      ++index_;
-      return *this;
-    }
-
-    Iterator& operator--() {
-      glue_assert(index_ > 0);
-      --index_;
-      return *this;
-    }
-
-    Iterator operator++(int) {
-      Iterator temp = *this;
-      ++index_;
-      return temp;
-    }
-
-    Iterator operator--(int) {
-      glue_assert(index_ > 0);
-      Iterator temp = *this;
-      --index_;
-      return temp;
-    }
-
-    friend bool operator==(const Iterator<TBuffer, TPtr, TRef>& a,
-                           const Iterator<TBuffer, TPtr, TRef>& b) {
-      return &a.buffer_ == &b.buffer_ && a.index_ == b.index_;
-    }
-
-    friend bool operator!=(const Iterator<TBuffer, TPtr, TRef>& a,
-                           const Iterator<TBuffer, TPtr, TRef>& b) {
-      return !(a == b);
-    }
-
-   private:
-    TBuffer buffer_;
-    std::size_t index_ = 0;
-  };
-
- public:
   using value_type = T;
-  using iterator = Iterator<FixedCircularBuffer&, T*, T&>;
+  using iterator =
+      collections::CircularBufferIterator<FixedCircularBuffer&, T, T*, T&>;
   using const_iterator =
-      Iterator<const FixedCircularBuffer&, const T*, const T&>;
+      collections::CircularBufferIterator<const FixedCircularBuffer&, T,
+                                          const T*, const T&>;
 
   static constexpr std::size_t capacity() noexcept { return Capacity; }
 
