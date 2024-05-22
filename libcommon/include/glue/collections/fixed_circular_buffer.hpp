@@ -8,7 +8,7 @@
 
 namespace glue {
 template <typename T, std::size_t Capacity>
-class CircularBuffer final {
+class FixedCircularBuffer final {
  public:
   template <typename TBuffer, typename TPtr, typename TRef>
   class Iterator {
@@ -70,41 +70,42 @@ class CircularBuffer final {
 
  public:
   using value_type = T;
-  using iterator = Iterator<CircularBuffer&, T*, T&>;
-  using const_iterator = Iterator<const CircularBuffer&, const T*, const T&>;
+  using iterator = Iterator<FixedCircularBuffer&, T*, T&>;
+  using const_iterator =
+      Iterator<const FixedCircularBuffer&, const T*, const T&>;
 
   static constexpr std::size_t capacity() noexcept { return Capacity; }
 
-  CircularBuffer() noexcept {}
-  CircularBuffer(std::initializer_list<T> list) {
+  FixedCircularBuffer() noexcept {}
+  FixedCircularBuffer(std::initializer_list<T> list) {
     glue_assert(list.size() <= capacity());
     std::copy(std::begin(list), std::end(list), std::back_inserter(*this));
   }
-  CircularBuffer(std::size_t count, const T& value) {
+  FixedCircularBuffer(std::size_t count, const T& value) {
     glue_assert(count <= capacity());
     std::fill_n(std::back_inserter(*this), count, value);
   }
 
-  ~CircularBuffer() {
+  ~FixedCircularBuffer() {
     for (auto it = begin(); it != end(); ++it) {
       it->~T();
     }
   }
 
-  CircularBuffer(const CircularBuffer& other) {
+  FixedCircularBuffer(const FixedCircularBuffer& other) {
     std::copy(std::begin(other), std::end(other), std::back_inserter(*this));
   }
-  CircularBuffer& operator=(const CircularBuffer& other) {
+  FixedCircularBuffer& operator=(const FixedCircularBuffer& other) {
     clear();
     std::copy(std::begin(other), std::end(other), std::back_inserter(*this));
     return *this;
   }
 
-  CircularBuffer(CircularBuffer&& other) noexcept {
+  FixedCircularBuffer(FixedCircularBuffer&& other) noexcept {
     using std::swap;
     swap(*this, other);
   }
-  CircularBuffer& operator=(CircularBuffer&& other) noexcept {
+  FixedCircularBuffer& operator=(FixedCircularBuffer&& other) noexcept {
     using std::swap;
     swap(*this, other);
     return *this;
@@ -155,7 +156,7 @@ class CircularBuffer final {
   T& operator[](std::size_t index) { return *get_ptr(index); }
   const T& operator[](std::size_t index) const { return *get_ptr(index); }
 
-  friend void swap(CircularBuffer& a, CircularBuffer& b) {
+  friend void swap(FixedCircularBuffer& a, FixedCircularBuffer& b) {
     using std::swap;
     swap(a.data_, b.data_);
     swap(a.begin_, b.begin_);
