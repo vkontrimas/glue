@@ -8,13 +8,14 @@
 using namespace glue;
 using namespace testing;
 
-TEST(CircularBufferTests, DefaultConstructs) {
+TEST(FixedCircularBufferTests, DefaultConstructs) {
   FixedCircularBuffer<int, 40> buffer;
   EXPECT_EQ(buffer.size(), 0);
   EXPECT_TRUE(buffer.empty());
 }
 
-TEST(CircularBufferTests, WhenDefaultConstructed_DoesNotConstructContents) {
+TEST(FixedCircularBufferTests,
+     WhenDefaultConstructed_DoesNotConstructContents) {
   static int num_ctor_calls = 0;
   struct Object final {
     Object() { num_ctor_calls++; }
@@ -24,7 +25,7 @@ TEST(CircularBufferTests, WhenDefaultConstructed_DoesNotConstructContents) {
   EXPECT_EQ(num_ctor_calls, 0);
 }
 
-TEST(CircularBufferDeathTests,
+TEST(FixedCircularBufferDeathTests,
      GivenInitializerList_ConstructBufferContainsItems) {
   FixedCircularBuffer<int, 40> buffer{10, 5, 9};
   EXPECT_EQ(buffer.size(), 3);
@@ -32,22 +33,23 @@ TEST(CircularBufferDeathTests,
   EXPECT_THAT(buffer, ElementsAre(10, 5, 9));
 }
 
-TEST(CircularBufferTests, GivenFullBuffer_FullIsTrue) {
+TEST(FixedCircularBufferTests, GivenFullBuffer_FullIsTrue) {
   FixedCircularBuffer<int, 4> buffer{1, 2, 3, 4};
   EXPECT_TRUE(buffer.full());
 }
 
-TEST(CircularBufferTests, GivenNonFullBuffer_FullIsFalse) {
+TEST(FixedCircularBufferTests, GivenNonFullBuffer_FullIsFalse) {
   FixedCircularBuffer<int, 4> buffer{1, 2, 3};
   EXPECT_FALSE(buffer.full());
 }
 
-TEST(CircularBufferDeathTests, GivenInitializerList_WhenListIsTooBig_Aborts) {
+TEST(FixedCircularBufferDeathTests,
+     GivenInitializerList_WhenListIsTooBig_Aborts) {
   auto construct = []() { FixedCircularBuffer<int, 2> buffer{10, 5, 9}; };
   EXPECT_DEATH(construct(), "Assertion.*failed");
 }
 
-TEST(CircularBufferTests,
+TEST(FixedCircularBufferTests,
      GivenCountAndValue_ConstructBufferContainingCountCopies) {
   struct Object {
     int value;
@@ -61,7 +63,7 @@ TEST(CircularBufferTests,
   }
 }
 
-TEST(CircularBufferDeathTests,
+TEST(FixedCircularBufferDeathTests,
      GivenCountAndValue_WhenCountExceedsCapacity_Aborts) {
   struct Object {
     int value;
@@ -73,19 +75,19 @@ TEST(CircularBufferDeathTests,
   EXPECT_DEATH(construct(), "Assertion.*failed");
 }
 
-TEST(CircularBufferTests, IndexingWorks) {
+TEST(FixedCircularBufferTests, IndexingWorks) {
   FixedCircularBuffer<int, 10> buffer{10, 9, 8};
   EXPECT_EQ(buffer[0], 10);
   EXPECT_EQ(buffer[1], 9);
   EXPECT_EQ(buffer[2], 8);
 }
 
-TEST(CircularBufferTests, BeginIsEndWhenEmpty) {
+TEST(FixedCircularBufferTests, BeginIsEndWhenEmpty) {
   FixedCircularBuffer<int, 10> buffer{};
   EXPECT_EQ(std::begin(buffer), std::end(buffer));
 }
 
-TEST(CircularBufferTests, IteratorWorks) {
+TEST(FixedCircularBufferTests, IteratorWorks) {
   struct Object {
     int value;
   };
@@ -100,7 +102,7 @@ TEST(CircularBufferTests, IteratorWorks) {
   EXPECT_THAT(values, ElementsAre(42, 42, 42, 42, 42, 42, 42, 42, 42, 42));
 }
 
-TEST(CircularBufferTests, WhenBufferNotFull_IteratorWorks) {
+TEST(FixedCircularBufferTests, WhenBufferNotFull_IteratorWorks) {
   struct Object {
     int value;
   };
@@ -115,7 +117,7 @@ TEST(CircularBufferTests, WhenBufferNotFull_IteratorWorks) {
   EXPECT_THAT(values, ElementsAre(42, 42, 42, 42));
 }
 
-TEST(CircularBufferTests, WhenEndIsNotAtEndOfBuffer_IteratorWorks) {
+TEST(FixedCircularBufferTests, WhenEndIsNotAtEndOfBuffer_IteratorWorks) {
   struct Object {
     int value;
   };
@@ -134,7 +136,7 @@ TEST(CircularBufferTests, WhenEndIsNotAtEndOfBuffer_IteratorWorks) {
   EXPECT_THAT(values, ElementsAre(42, 42));
 }
 
-TEST(CircularBufferTests, WhenIteratorNotAtBegin_IteratorWorks) {
+TEST(FixedCircularBufferTests, WhenIteratorNotAtBegin_IteratorWorks) {
   FixedCircularBuffer<int, 10> buffer{10, 12, 9, 2};
   EXPECT_EQ(buffer.size(), 4);
 
@@ -149,14 +151,14 @@ TEST(CircularBufferTests, WhenIteratorNotAtBegin_IteratorWorks) {
   EXPECT_THAT(values, ElementsAre(12, 9, 2));
 }
 
-TEST(CircularBufferTests, ClearEmptiesBuffer) {
+TEST(FixedCircularBufferTests, ClearEmptiesBuffer) {
   FixedCircularBuffer<int, 5> buffer{4, 5, 3};
   EXPECT_THAT(buffer, ElementsAre(4, 5, 3));
   buffer.clear();
   EXPECT_THAT(buffer, IsEmpty());
 }
 
-TEST(CircularBufferTests, PushBack) {
+TEST(FixedCircularBufferTests, PushBack) {
   FixedCircularBuffer<int, 5> buffer{4, 5, 3};
   EXPECT_THAT(buffer, ElementsAre(4, 5, 3));
   buffer.push_back(10);
@@ -171,7 +173,7 @@ TEST(CircularBufferTests, PushBack) {
   EXPECT_THAT(buffer, ElementsAre(5, 3, 10, 52));
 }
 
-TEST(CircularBufferTests, PopBack) {
+TEST(FixedCircularBufferTests, PopBack) {
   FixedCircularBuffer<int, 5> buffer{4, 5, 3};
   EXPECT_THAT(buffer, ElementsAre(4, 5, 3));
   buffer.pop_back();
@@ -190,7 +192,7 @@ TEST(CircularBufferTests, PopBack) {
   EXPECT_THAT(buffer, IsEmpty());
 }
 
-TEST(CircularBufferTests, PopFront) {
+TEST(FixedCircularBufferTests, PopFront) {
   FixedCircularBuffer<int, 5> buffer{4, 5, 3};
   EXPECT_THAT(buffer, ElementsAre(4, 5, 3));
   buffer.pop_front();
@@ -209,7 +211,7 @@ TEST(CircularBufferTests, PopFront) {
   EXPECT_THAT(buffer, IsEmpty());
 }
 
-TEST(CircularBufferTests, PopBackCallsDestructor) {
+TEST(FixedCircularBufferTests, PopBackCallsDestructor) {
   static int num_dtor_calls = 0;
   struct Object {
     ~Object() { ++num_dtor_calls; }
@@ -227,7 +229,7 @@ TEST(CircularBufferTests, PopBackCallsDestructor) {
   EXPECT_EQ(num_dtor_calls, 4);
 }
 
-TEST(CircularBufferTests, PopFrontCallsDestructor) {
+TEST(FixedCircularBufferTests, PopFrontCallsDestructor) {
   static int num_dtor_calls = 0;
   struct Object {
     ~Object() { ++num_dtor_calls; }
@@ -245,7 +247,7 @@ TEST(CircularBufferTests, PopFrontCallsDestructor) {
   EXPECT_EQ(num_dtor_calls, 4);
 }
 
-TEST(CircularBufferTests, ClearCallsDestructors) {
+TEST(FixedCircularBufferTests, ClearCallsDestructors) {
   static int num_dtor_calls = 0;
   struct Object {
     ~Object() { ++num_dtor_calls; }
@@ -257,7 +259,7 @@ TEST(CircularBufferTests, ClearCallsDestructors) {
   EXPECT_EQ(num_dtor_calls, 4);
 }
 
-TEST(CircularBufferTests, DestructorCallsDestructors) {
+TEST(FixedCircularBufferTests, DestructorCallsDestructors) {
   static int num_dtor_calls = 0;
   struct Object {
     ~Object() { ++num_dtor_calls; }

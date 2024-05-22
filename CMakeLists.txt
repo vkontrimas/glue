@@ -37,7 +37,7 @@ if (GLUE_BUILD_TESTS)
         tests_common
         libcommon/tests/objects/test_object_id.cpp
         libcommon/tests/collections/test_fixed_vec.cpp
-        libcommon/tests/collections/test_circular_buffer.cpp
+        libcommon/tests/collections/test_fixed_circular_buffer.cpp
     )
     target_link_libraries(tests_common PRIVATE common GTest::gtest_main GTest::gmock_main)
 endif()
