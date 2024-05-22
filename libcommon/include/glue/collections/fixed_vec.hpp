@@ -53,6 +53,7 @@ class FixedVec final {
 
   std::size_t size() const noexcept { return size_; }
   bool empty() const noexcept { return size() == 0; }
+  bool full() const noexcept { return size() == capacity(); }
 
   void push_back(const T& val) { emplace_back(val); }
 

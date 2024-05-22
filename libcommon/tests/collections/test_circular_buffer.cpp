@@ -32,6 +32,16 @@ TEST(CircularBufferDeathTests,
   EXPECT_THAT(buffer, ElementsAre(10, 5, 9));
 }
 
+TEST(CircularBufferTests, GivenFullBuffer_FullIsTrue) {
+  CircularBuffer<int, 4> buffer{1, 2, 3, 4};
+  EXPECT_TRUE(buffer.full());
+}
+
+TEST(CircularBufferTests, GivenNonFullBuffer_FullIsFalse) {
+  CircularBuffer<int, 4> buffer{1, 2, 3};
+  EXPECT_FALSE(buffer.full());
+}
+
 TEST(CircularBufferDeathTests, GivenInitializerList_WhenListIsTooBig_Aborts) {
   auto construct = []() { CircularBuffer<int, 2> buffer{10, 5, 9}; };
   EXPECT_DEATH(construct(), "Assertion.*failed");

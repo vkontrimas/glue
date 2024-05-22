@@ -75,6 +75,16 @@ TEST(FixedVecTests, GivenEmptyVector_EmptyReturnsTrue) {
   EXPECT_TRUE(vector.empty());
 }
 
+TEST(FixedVecTests, GivenFullVector_FullReturnsTrue) {
+  FixedVec<int, 4> vector{3, 4, 5, 6};
+  EXPECT_TRUE(vector.full());
+}
+
+TEST(FixedVecTests, GivenNonFullVector_FullReturnsFalse) {
+  FixedVec<int, 4> vector{3, 5, 6};
+  EXPECT_FALSE(vector.full());
+}
+
 TEST(FixedVecTests, GivenVectorWithElements_EmptyReturnsFalse) {
   FixedVec<int, 5> vector{{10, 9, 8}};
   EXPECT_FALSE(vector.empty());

@@ -112,6 +112,7 @@ class CircularBuffer final {
 
   std::size_t size() const noexcept { return size_; }
   bool empty() const noexcept { return size() == 0; }
+  bool full() const noexcept { return size() == capacity(); }
 
   template <typename... TArgs>
   void emplace_back(TArgs&&... args) {
