@@ -33,8 +33,12 @@ target_compile_features(common PUBLIC cxx_std_20)
 target_compile_options(common PUBLIC -Wno-deprecated-volatile)
 
 if (GLUE_BUILD_TESTS) 
-    add_executable(tests_common libcommon/tests/objects/test_object_id.cpp)
-    target_link_libraries(tests_common PRIVATE common GTest::gtest_main)
+    add_executable(
+        tests_common
+        libcommon/tests/objects/test_object_id.cpp
+        libcommon/tests/collections/test_fixed_vec.cpp
+    )
+    target_link_libraries(tests_common PRIVATE common GTest::gtest_main GTest::gmock_main)
 endif()
 
 # Gameplay logic

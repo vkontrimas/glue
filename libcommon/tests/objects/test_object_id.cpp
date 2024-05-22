@@ -7,19 +7,19 @@
 using namespace glue;
 using namespace glue::objects;
 
-TEST(ObjectID, Equality) {
+TEST(ObjectIDTests, Equality) {
   const ObjectID a{"foo"};
   const ObjectID b{"foo"};
   ASSERT_EQ(a, b);
 }
 
-TEST(ObjectID, Inequality) {
+TEST(ObjectIDTests, Inequality) {
   const ObjectID a{"foo"};
   const ObjectID b{"bar"};
   ASSERT_NE(a, b);
 }
 
-TEST(ObjectID, WeakCollisionSanityCheck) {
+TEST(ObjectIDTests, WeakCollisionSanityCheck) {
   const std::vector<const char*> names{
       "player", "cube102", "ground", "earth", "light", "camera12341u895191515",
       "camera"};
@@ -32,7 +32,7 @@ TEST(ObjectID, WeakCollisionSanityCheck) {
   }
 }
 
-TEST(ObjectID, RecoverNameFromID) {
+TEST(ObjectIDTests, RecoverNameFromID) {
   const std::vector<const char*> expected{
       "player", "cube102", "ground", "earth", "light", "camera12341u895191515",
       "camera"};
