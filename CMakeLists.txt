@@ -57,8 +57,12 @@ target_link_libraries(game PUBLIC common Jolt)
 target_compile_features(game PUBLIC cxx_std_20)
 
 if (GLUE_BUILD_TESTS) 
-    add_executable(tests_game libgame/tests/physics/test_jolt_glm_compat.cpp)
-    target_link_libraries(tests_game PRIVATE game GTest::gtest_main)
+    add_executable(
+        tests_game
+        libgame/tests/physics/test_jolt_glm_compat.cpp
+        libgame/tests/simulator/test_fixed_timestep.cpp
+    )
+    target_link_libraries(tests_game PRIVATE game GTest::gtest_main GTest::gmock)
     target_include_directories(tests_game PRIVATE libgame/src)
 endif()
 
