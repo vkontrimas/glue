@@ -42,12 +42,6 @@ struct WorldFrame {
         physics.add_dynamic_cube(id, cube_index,
                                  {position, glm::identity<quat>()}, cube_width,
                                  false);
-        // physics.on_become_active(id, [&cube_activities, cube_index]() {
-        //   cube_activities[cube_index] = 1.0f;
-        // });
-        // physics.on_become_inactive(id, [&cube_activities, cube_index]() {
-        //   cube_activities[cube_index] = 0.0f;
-        // });
         cube_index++;
       }
     }
