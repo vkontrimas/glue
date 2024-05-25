@@ -11,6 +11,7 @@
 
 #include <glue/types.hpp>
 #include <thread>
+#include <unordered_set>
 
 #include "jolt_activation_listener.hpp"
 #include "jolt_contact_listener.hpp"
@@ -31,9 +32,11 @@ class JoltPhysicsBackend {
    *
    * (Containing BodyID and relevant physics system pointer.)
    */
-  void map_object_to_body(ObjectID object, JPH::BodyID body);
+  void map_object_to_body(ObjectID object, std::size_t object_index,
+                          JPH::BodyID body);
   JPH::BodyID get_body_id(ObjectID object) const;
   ObjectID get_object_id(JPH::BodyID body) const;
+  std::size_t get_object_index(JPH::BodyID body) const;
 
   JPH::PhysicsSystem& physics_system() { return physics_system_; }
   JoltContactListener& contact_listener() { return contact_listener_; }
@@ -51,5 +54,6 @@ class JoltPhysicsBackend {
   JoltActivationListener activation_listener_;
   std::unordered_map<ObjectID, JPH::BodyID> object_id_to_body_id_;
   std::unordered_map<JPH::BodyID, ObjectID> body_id_to_object_id_;
+  std::unordered_map<JPH::BodyID, std::size_t> stupid_body_id_to_object_index_;
 };
 }  // namespace glue::physics

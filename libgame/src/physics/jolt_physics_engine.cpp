@@ -8,14 +8,14 @@
 #include <glog/logging.h>
 
 #include <glue/physics/jolt_physics_engine.hpp>
+#include <glue/world_frame.hpp>
 
 #include "jolt_glm_compat.hpp"
 #include "jolt_physics_backend.hpp"
 #include "jolt_setup_globals.hpp"
 
 namespace glue::physics {
-JoltPhysicsEngine::JoltPhysicsEngine(f32 timestep)
-    : BasePhysicsEngine(timestep) {
+JoltPhysicsEngine::JoltPhysicsEngine() {
   setup_jolt_allocator();
   setup_jolt_logging();
   backend_.reset(new JoltPhysicsBackend{65536, 0, 65536, 10240});
@@ -23,11 +23,25 @@ JoltPhysicsEngine::JoltPhysicsEngine(f32 timestep)
 
 JoltPhysicsEngine::~JoltPhysicsEngine() = default;
 
-void JoltPhysicsEngine::step() {
-  backend_->update(timestep(), 1);
+void JoltPhysicsEngine::step(f64 timestep, WorldFrame& frame) {
+  backend_->update(static_cast<f32>(timestep), 1);
   process_on_collision_enter_subscriptions();
   process_on_become_active_subscriptions();
   process_on_become_inactive_subscriptions();
+  read_back_poses(frame);
+}
+
+void JoltPhysicsEngine::read_back_poses(WorldFrame& frame) {
+  for (auto body_id : backend_->activation_listener().active_bodies()) {
+    const auto index = backend_->get_object_index(body_id);
+
+    auto& body_interface = backend_->physics_system().GetBodyInterface();
+    auto position = body_interface.GetCenterOfMassPosition(body_id);
+    auto rotation = body_interface.GetRotation(body_id);
+
+    frame.cubes[index].position = to_glm(position);
+    frame.cubes[index].rotation = to_glm(rotation);
+  }
 }
 
 void JoltPhysicsEngine::process_on_collision_enter_subscriptions() {
@@ -79,19 +93,9 @@ void JoltPhysicsEngine::subscribe_on_collision_enter(ObjectID id) {
   backend_->contact_listener().subscribe_on_contact_added(body_id);
 }
 
-void JoltPhysicsEngine::read_pose(ObjectID object, Pose& pose) {
-  const auto body_id = backend_->get_body_id(object);
-  auto& body_interface = backend_->physics_system().GetBodyInterface();
-  JPH::Vec3 position = body_interface.GetCenterOfMassPosition(body_id);
-  JPH::Quat rotation = body_interface.GetRotation(body_id);
-  pose.position = to_glm(position);
-  pose.rotation = to_glm(rotation);
-}
-
-void JoltPhysicsEngine::add_dynamic_cube(ObjectID id, const Pose& pose,
-                                         float radius, bool start_active) {
-  add_object(id, pose, false);
-
+void JoltPhysicsEngine::add_dynamic_cube(ObjectID id, std::size_t stupid_index,
+                                         const Pose& pose, float radius,
+                                         bool start_active) {
   auto& body_interface = backend_->physics_system().GetBodyInterface();
 
   JPH::BoxShapeSettings cube_shape_settings{JPH::Vec3{radius, radius, radius}};
@@ -108,12 +112,11 @@ void JoltPhysicsEngine::add_dynamic_cube(ObjectID id, const Pose& pose,
                                             ? JPH::EActivation::Activate
                                             : JPH::EActivation::DontActivate);
 
-  backend_->map_object_to_body(id, cube->GetID());
+  backend_->map_object_to_body(id, stupid_index, cube->GetID());
 }
 
-void JoltPhysicsEngine::add_static_plane(ObjectID id, const Plane& plane) {
-  add_object(id, plane.pose, true);
-
+void JoltPhysicsEngine::add_static_plane(ObjectID id, std::size_t stupid_index,
+                                         const Plane& plane) {
   auto& body_interface = backend_->physics_system().GetBodyInterface();
 
   JPH::BoxShapeSettings shape_settings{JPH::Vec3{plane.size, 1.0f, plane.size}};
@@ -129,7 +132,7 @@ void JoltPhysicsEngine::add_static_plane(ObjectID id, const Plane& plane) {
 
   body_interface.AddBody(plane_body->GetID(), JPH::EActivation::DontActivate);
 
-  backend_->map_object_to_body(id, plane_body->GetID());
+  backend_->map_object_to_body(id, stupid_index, plane_body->GetID());
 }
 
 void JoltPhysicsEngine::add_torque(ObjectID id, const vec3& axis, f32 torque) {

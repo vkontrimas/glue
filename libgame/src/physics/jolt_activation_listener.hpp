@@ -9,6 +9,7 @@
 
 #include <glue/types.hpp>
 #include <mutex>
+#include <unordered_set>
 
 namespace glue::physics {
 class JoltActivationListener : public JPH::BodyActivationListener {
@@ -17,7 +18,9 @@ class JoltActivationListener : public JPH::BodyActivationListener {
                                u64 user_data) override {
     const std::lock_guard guard{become_active_lock_};
     become_active_.push_back(body);
+    active_bodies_.emplace(body);
   }
+
   template <typename F>
   void process_active_queue(F f) {
     const std::lock_guard guard{become_active_lock_};
@@ -35,6 +38,7 @@ class JoltActivationListener : public JPH::BodyActivationListener {
                                  u64 user_data) override {
     const std::lock_guard guard{become_inactive_lock_};
     become_inactive_.push_back(body);
+    active_bodies_.erase(body);
   }
 
   template <typename F>
@@ -50,11 +54,15 @@ class JoltActivationListener : public JPH::BodyActivationListener {
     become_inactive_.clear();
   }
 
+  auto active_bodies() const { return active_bodies_; }
+
  private:
   std::mutex become_active_lock_;
   std::vector<JPH::BodyID> become_active_;
 
   std::mutex become_inactive_lock_;
   std::vector<JPH::BodyID> become_inactive_;
+
+  std::unordered_set<JPH::BodyID> active_bodies_;
 };
 }  // namespace glue::physics

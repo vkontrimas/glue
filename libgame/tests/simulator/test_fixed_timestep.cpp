@@ -11,14 +11,19 @@ using namespace testing;
 
 class MockStepper final {
  public:
+  // We mock a step() method to represent operator() which is what's actually
+  // called.
   MOCK_METHOD(void, step, (f64));
 };
-static_assert(CStepper<MockStepper>);
 
 class FixedTimestepTests : public ::testing::Test {
  public:
   constexpr f64 epsilon() const noexcept { return 0.000001; }
   auto create_stepper() { return MockStepper{}; }
+
+  auto wrap(MockStepper& stepper) {
+    return [&](f64 timestep) { stepper.step(timestep); };
+  }
 };
 
 TEST_F(FixedTimestepTests,
@@ -28,9 +33,9 @@ TEST_F(FixedTimestepTests,
 
   FixedTimestep fixed_timestep{1.0 / 60.0};
   EXPECT_NEAR(fixed_timestep.time_to_next_step(), 0.0, epsilon());
-  fixed_timestep.update(stepper, delta_time);
+  fixed_timestep.update(delta_time, wrap(stepper));
   EXPECT_NEAR(fixed_timestep.time_to_next_step(), delta_time, epsilon());
-  fixed_timestep.update(stepper, delta_time);
+  fixed_timestep.update(delta_time, wrap(stepper));
   EXPECT_NEAR(fixed_timestep.time_to_next_step(), delta_time + delta_time,
               epsilon());
 }
@@ -43,7 +48,7 @@ TEST_F(FixedTimestepTests, WhenDeltaTimeIsOneTimestep_StepsOnce) {
   EXPECT_CALL(stepper, step(DoubleEq(timestep))).Times(1);
 
   FixedTimestep fixed_timestep{timestep};
-  fixed_timestep.update(stepper, delta_time);
+  fixed_timestep.update(delta_time, wrap(stepper));
   EXPECT_NEAR(fixed_timestep.time_to_next_step(), 0.0, epsilon());
 }
 
@@ -55,7 +60,7 @@ TEST_F(FixedTimestepTests, WhenDeltaTimeIsFourTimesteps_StepsFourTimes) {
   EXPECT_CALL(stepper, step(DoubleEq(timestep))).Times(4);
 
   FixedTimestep fixed_timestep{timestep};
-  fixed_timestep.update(stepper, delta_time);
+  fixed_timestep.update(delta_time, wrap(stepper));
   EXPECT_NEAR(fixed_timestep.time_to_next_step(), 0.0, epsilon());
 }
 
@@ -69,6 +74,6 @@ TEST_F(FixedTimestepTests,
   EXPECT_CALL(stepper, step(DoubleEq(timestep))).Times(1);
 
   FixedTimestep fixed_timestep{timestep};
-  fixed_timestep.update(stepper, delta_time);
+  fixed_timestep.update(delta_time, wrap(stepper));
   EXPECT_NEAR(fixed_timestep.time_to_next_step(), remainder, epsilon());
 }

@@ -25,7 +25,7 @@ if (GLUE_BUILD_TESTS)
 endif()
 
 # Common typedefs, header-only utilities
-add_library(common OBJECT libcommon/src/objects/id.cpp)
+add_library(common STATIC libcommon/src/objects/id.cpp)
 target_link_libraries(common PUBLIC glm glog)
 target_link_libraries(common PRIVATE zlib)
 target_include_directories(common PUBLIC libcommon/include)
@@ -46,11 +46,12 @@ endif()
 # Gameplay logic
 # (for client / server)
 add_library(
-    game OBJECT
+    game STATIC
     libgame/src/physics/layers.cpp
     libgame/src/physics/jolt_physics_engine.cpp
     libgame/src/physics/jolt_physics_backend.cpp
     libgame/src/physics/jolt_setup_globals.cpp
+    libgame/src/director/game_director.cpp
 )
 target_include_directories(game PUBLIC libgame/include)
 target_link_libraries(game PUBLIC common Jolt)
@@ -61,6 +62,7 @@ if (GLUE_BUILD_TESTS)
         tests_game
         libgame/tests/physics/test_jolt_glm_compat.cpp
         libgame/tests/simulator/test_fixed_timestep.cpp
+        libgame/tests/simulator/test_predictor_reconciler_simulator.cpp
     )
     target_link_libraries(tests_game PRIVATE game GTest::gtest_main GTest::gmock)
     target_include_directories(tests_game PRIVATE libgame/src)

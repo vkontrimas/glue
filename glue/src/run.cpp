@@ -4,7 +4,10 @@
 
 #include <array>
 #include <glue/debug/timer.hpp>
+#include <glue/director/game_director.hpp>
 #include <glue/physics.hpp>
+#include <glue/physics/jolt_physics_engine.hpp>
+#include <glue/simulator/predictor_reconciler_simulator.hpp>
 
 #include "cube_renderer.hpp"
 #include "debug/data_logger.hpp"
@@ -49,37 +52,6 @@ class Renderer {
   CubeRenderer cube_renderer_;
   PlaneRenderer plane_renderer_;
 };
-
-void place_cubes(int rows, float cube_width,
-                 physics::BasePhysicsEngine& physics,
-                 std::vector<ObjectID>& cube_ids,
-                 std::vector<f32>& cube_activities) {
-  cube_ids.resize(rows * rows, ObjectID::random());
-  cube_activities.resize(rows * rows, 0);
-
-  float spacing = cube_width * 6.0f;
-  vec3 start =
-      -1 * spacing * 0.5f * vec3{rows, 0, rows} + vec3{0, cube_width, 0};
-  i32 cube_index = 0;
-  for (int i = 0; i < rows; ++i) {
-    for (int j = 0; j < rows; ++j) {
-      vec3 position = start + spacing * vec3{i, 0, j};
-
-      const auto id = ObjectID::random();
-      cube_ids[cube_index] = id;
-      cube_activities[cube_index] = 0.0f;
-      physics.add_dynamic_cube(id, {position, glm::identity<quat>()},
-                               cube_width, false);
-      physics.on_become_active(id, [&cube_activities, cube_index]() {
-        cube_activities[cube_index] = 1.0f;
-      });
-      physics.on_become_inactive(id, [&cube_activities, cube_index]() {
-        cube_activities[cube_index] = 0.0f;
-      });
-      cube_index++;
-    }
-  }
-}
 
 class MoveInput {
  public:
@@ -131,14 +103,6 @@ class MoveInput {
     return glm::normalize(right * input.x + forward * input.z);
   }
 
-  vec3 torque_axis(f32 camera_yaw) const {
-    if (!has_input()) {
-      return vec3{};
-    }
-
-    return glm::cross(vec3{0.0f, 1.0f, 0.0f}, movement_direction(camera_yaw));
-  }
-
  private:
   bool input_forward_ = false;
   bool input_back_ = false;
@@ -155,43 +119,61 @@ void run(const RunOptions& options) {
   auto gl_context = init_gl(window.get());
   glue::imgui::ImGuiContext imgui{window.get(), gl_context.get()};
 
-  auto physics = create_physics_engine();
+  auto director = std::make_shared<director::GameDirector>();
+  auto physics = std::make_shared<physics::JoltPhysicsEngine>();
 
   const auto ground_id = ObjectID::random();
   const Plane ground_plane{{}, 3000.0f};
-  physics.add_static_plane(ground_id, ground_plane);
+  physics->add_static_plane(ground_id, 0, ground_plane);
 
-  OrbitCamera camera;
+  const ObjectID kPlayerID{"player"};
+  constexpr f32 kPlayerCubeRadius = 0.5f;
+  constexpr Pose kPlayerStartPose{vec3{0.0f, 3.0f, 0.0f},
+                                  glm::identity<quat>()};
+  constexpr f32 kCubeRadius = 0.2f;
+  auto initial_frame =
+      WorldFrame::init(OrbitCamera{}, kPlayerID, kPlayerStartPose,
+                       kPlayerCubeRadius, 30, kCubeRadius, *physics);
 
-  ObjectID player_id{"player"};
-  constexpr float kPlayerCubeRadius = 0.5f;
-  {
-    constexpr vec3 player_start_position{0.0f, 3.0f, 0.0f};
-    physics.add_dynamic_cube(player_id,
-                             {player_start_position, glm::identity<quat>()},
-                             kPlayerCubeRadius, true);
-    camera.target = player_start_position;
-  }
+  auto simulator = std::make_shared<simulator::PredictorReconcilerSimulator>(
+      director, physics, *initial_frame, 1.0 / 60.0, 0.250);
+
   MoveInput player_move_input;
-  constexpr int kPlayerMaxJumps = 5;
-  int player_jump_count = 0;
-  float player_activity = 1.0f;
-  physics.on_collision_enter(player_id, [&](ObjectID other) {
-    if (other == ground_id) {
-      player_jump_count = 0;
-    }
-  });
-  physics.on_become_active(player_id, [&]() { player_activity = 1.0f; });
-  physics.on_become_inactive(player_id, [&]() { player_activity = 0.0f; });
 
-  std::vector<ObjectID> cube_ids;
-  std::vector<float> cube_activities;
-  constexpr float kCubeRadius = 0.2f;
-  place_cubes(30, kCubeRadius, physics, cube_ids, cube_activities);
+  // constexpr int kPlayerMaxJumps = 5;
+  // int player_jump_count = 0;
+  // float player_activity = 1.0f;
+  // physics.on_collision_enter(kPlayerID, [&](ObjectID other) {
+  //   if (other == ground_id) {
+  //     player_jump_count = 0;
+  //   }
+  // });
+  // physics.on_become_active(kPlayerID, [&]() { player_activity = 1.0f; });
+  // physics.on_become_inactive(kPlayerID, [&]() { player_activity = 0.0f; });
+
+  // std::vector<ObjectID> cube_ids;
+  // std::vector<float> cube_activities;
+  // constexpr float kCubeRadius = 0.2f;
+  // place_cubes(30, kCubeRadius, physics, cube_ids, cube_activities);
 
   Renderer renderer;
 
-  std::vector<CubeRenderer::Instance> cube_instances{cube_ids.size() + 1};
+  std::vector<CubeRenderer::Instance> cube_instances{
+      initial_frame->cubes.size()};
+
+  for (auto& instance : cube_instances) {
+    instance.size = kCubeRadius;
+    instance.activity = 0.0f;
+  }
+  cube_instances[0].size = kPlayerCubeRadius;
+
+  const auto fill_instances = [&](const WorldFrame& frame) {
+    for (std::size_t i = 0; i < frame.cubes.size(); ++i) {
+      const auto& pose = frame.cubes[i];
+      cube_instances[i].position = pose.position;
+      cube_instances[i].rotation = pose.rotation;
+    }
+  };
 
   u64 game_start_time = SDL_GetPerformanceCounter();
   u64 last_frame = 0;
@@ -266,6 +248,7 @@ void run(const RunOptions& options) {
     now = SDL_GetPerformanceCounter();
     f64 frame_delta_time = static_cast<f64>(now - previous_time) /
                            static_cast<f64>(SDL_GetPerformanceFrequency());
+    Input input{};
 
     SDL_Event event{};
     while (SDL_PollEvent(&event)) {
@@ -279,10 +262,7 @@ void run(const RunOptions& options) {
         is_running = false;
       } else if (event.type == SDL_KEYUP &&
                  event.key.keysym.sym == SDLK_SPACE) {
-        if (player_jump_count < kPlayerMaxJumps) {
-          physics.add_impulse(player_id, vec3{0.0f, 5000.0f, 0.0f});
-          player_jump_count++;
-        }
+        input.jump = true;
       }
     }
 
@@ -345,10 +325,6 @@ void run(const RunOptions& options) {
           ImPlot::EndPlot();
         }
 
-        ImGui::Text("Physics timestep %03.3f ms (%2.0f UPS)",
-                    physics.timestep() * 1000.0f, 1.0f / physics.timestep());
-        ImGui::Text("Jumps: %d", player_jump_count);
-
         ImGui::TreePop();
         ImGui::Spacing();
       }
@@ -388,47 +364,28 @@ void run(const RunOptions& options) {
       ImPlot::ShowDemoWindow(&show_implot_demo);
     }
 
-    physics.update_timed(frame_delta_time, physics_times, [&]() {
-      if (player_move_input.has_input()) {
-        physics.add_torque(
-            player_id, player_move_input.torque_axis(camera.position_rel.yaw),
-            5000.0f);
-        physics.add_force(player_id, player_move_input.movement_direction(
-                                         camera.position_rel.yaw) *
-                                         1250.0f);
-      }
-    });
+    input.direction = player_move_input.movement_direction(
+        initial_frame->camera.position_rel.yaw);
+    simulator->update_timed(frame_delta_time, input, physics_times);
 
-    const debug::Timer render_timer;
+    {
+      const debug::Timer render_timer;
 
-    const auto player_pose = physics.get_interpolated_pose(player_id);
-    camera.target = player_pose.position;
-    auto& player_instance = cube_instances.back();
-    player_instance.position = player_pose.position;
-    player_instance.rotation = player_pose.rotation;
-    player_instance.activity = player_activity;
-    player_instance.size = kPlayerCubeRadius;
+      simulator->current_world_frame(*initial_frame);
+      fill_instances(*initial_frame);
 
-    for (int i = 0; i < cube_instances.size() - 1; ++i) {
-      const auto pose = physics.get_interpolated_pose(cube_ids[i]);
+      int render_width, render_height;
+      SDL_GetWindowSizeInPixels(window.get(), &render_width, &render_height);
+      initial_frame->camera.params.aspect =
+          static_cast<f32>(render_width) / static_cast<f32>(render_height);
 
-      cube_instances[i].position = pose.position;
-      cube_instances[i].rotation = pose.rotation;
-      cube_instances[i].activity = cube_activities[i];
-      cube_instances[i].size = kCubeRadius;
+      glViewport(0, 0, render_width, render_height);
+      renderer.draw(ground_plane, cube_instances, initial_frame->camera);
+
+      imgui.draw();
+
+      render_times.log(render_timer.elapsed_ms<f64>());
     }
-
-    int render_width, render_height;
-    SDL_GetWindowSizeInPixels(window.get(), &render_width, &render_height);
-    camera.params.aspect =
-        static_cast<f32>(render_width) / static_cast<f32>(render_height);
-
-    glViewport(0, 0, render_width, render_height);
-    renderer.draw(ground_plane, cube_instances, camera);
-
-    imgui.draw();
-
-    render_times.log(render_timer.elapsed_ms<f64>());
 
     const bool unlimited_frames =
         selected_timestep == timestep_limits.size() - 1;

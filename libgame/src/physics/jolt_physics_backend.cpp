@@ -22,12 +22,18 @@ void JoltPhysicsBackend::update(f32 timestep, i32 collision_steps) {
                          &job_system_);
 }
 
-void JoltPhysicsBackend::map_object_to_body(ObjectID id, JPH::BodyID body) {
+void JoltPhysicsBackend::map_object_to_body(ObjectID id,
+                                            std::size_t object_index,
+                                            JPH::BodyID body) {
   auto it_success_pair_a = object_id_to_body_id_.emplace(id, body);
   CHECK(it_success_pair_a.second) << "couldn't insert object. already mapped.";
 
   auto it_success_pair_b = body_id_to_object_id_.emplace(body, id);
   CHECK(it_success_pair_b.second) << "couldn't insert object. already mapped.";
+
+  auto it_success_pair_c =
+      stupid_body_id_to_object_index_.emplace(body, object_index);
+  CHECK(it_success_pair_c.second) << "couldn't insert object. already mapped.";
 }
 
 JPH::BodyID JoltPhysicsBackend::get_body_id(ObjectID object) const {
@@ -39,6 +45,12 @@ JPH::BodyID JoltPhysicsBackend::get_body_id(ObjectID object) const {
 ObjectID JoltPhysicsBackend::get_object_id(JPH::BodyID body) const {
   auto it = body_id_to_object_id_.find(body);
   CHECK(it != std::end(body_id_to_object_id_));
+  return it->second;
+}
+
+std::size_t JoltPhysicsBackend::get_object_index(JPH::BodyID body) const {
+  auto it = stupid_body_id_to_object_index_.find(body);
+  CHECK(it != std::end(stupid_body_id_to_object_index_));
   return it->second;
 }
 }  // namespace glue::physics

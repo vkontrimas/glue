@@ -1,20 +1,24 @@
 #pragma once
 
-#include <glue/physics/base_physics_engine.hpp>
+#include <glue/physics/iphysics_engine.hpp>
 #include <memory>
 #include <unordered_map>
 
 namespace glue::physics {
 class JoltPhysicsBackend;
 
-class JoltPhysicsEngine final : public BasePhysicsEngine {
+class JoltPhysicsEngine final : public IPhysicsEngine {
  public:
-  JoltPhysicsEngine(f32 timestep);
+  JoltPhysicsEngine();
   virtual ~JoltPhysicsEngine();
 
-  virtual void add_dynamic_cube(ObjectID id, const Pose& pose, float radius,
+  virtual void step(f64 timestep, WorldFrame& frame) override;
+
+  virtual void add_dynamic_cube(ObjectID id, std::size_t stupid_index,
+                                const Pose& pose, float radius,
                                 bool start_active) override;
-  virtual void add_static_plane(ObjectID id, const Plane& plane) override;
+  virtual void add_static_plane(ObjectID id, std::size_t stupid_index,
+                                const Plane& plane) override;
 
   virtual void add_torque(ObjectID id, const vec3& axis, f32 force) override;
   virtual void add_impulse(ObjectID id, const vec3& impulse) override;
@@ -22,7 +26,7 @@ class JoltPhysicsEngine final : public BasePhysicsEngine {
 
   virtual void on_collision_enter(
       ObjectID id,
-      std::function<BasePhysicsEngine::OnCollisionEnterCallback> f) override {
+      std::function<IPhysicsEngine::OnCollisionEnterCallback> f) override {
     entry(id).on_collision_enter.push_back(f);
     subscribe_on_collision_enter(id);
   }
@@ -37,19 +41,15 @@ class JoltPhysicsEngine final : public BasePhysicsEngine {
     entry(id).on_become_inactive.push_back(f);
   }
 
- protected:
-  virtual void step() override;
-  virtual void read_pose(ObjectID object, Pose& pose) override;
-
  private:
   std::unique_ptr<JoltPhysicsBackend> backend_;
 
   struct Subscriptions {
-    std::vector<std::function<BasePhysicsEngine::OnCollisionEnterCallback>>
+    std::vector<std::function<IPhysicsEngine::OnCollisionEnterCallback>>
         on_collision_enter;
-    std::vector<std::function<BasePhysicsEngine::OnActiveCallback>>
+    std::vector<std::function<IPhysicsEngine::OnActiveCallback>>
         on_become_active;
-    std::vector<std::function<BasePhysicsEngine::OnInactiveCallback>>
+    std::vector<std::function<IPhysicsEngine::OnInactiveCallback>>
         on_become_inactive;
   };
   std::unordered_map<ObjectID, Subscriptions> subscriptions_;
@@ -64,5 +64,7 @@ class JoltPhysicsEngine final : public BasePhysicsEngine {
   void process_on_become_inactive_subscriptions();
 
   void subscribe_on_collision_enter(ObjectID id);
+
+  void read_back_poses(WorldFrame& frame);
 };
 }  // namespace glue::physics
