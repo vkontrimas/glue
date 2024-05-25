@@ -119,9 +119,7 @@ void run(const RunOptions& options) {
   auto gl_context = init_gl(window.get());
   glue::imgui::ImGuiContext imgui{window.get(), gl_context.get()};
 
-  auto director = std::make_shared<director::GameDirector>();
   auto physics = std::make_shared<physics::JoltPhysicsEngine>();
-
   const auto ground_id = ObjectID::random();
   const Plane ground_plane{{}, 3000.0f};
   physics->add_static_plane(ground_id, 0, ground_plane);
@@ -135,27 +133,14 @@ void run(const RunOptions& options) {
       WorldFrame::init(OrbitCamera{}, kPlayerID, kPlayerStartPose,
                        kPlayerCubeRadius, 30, kCubeRadius, *physics);
 
+  auto director = std::make_shared<director::GameDirector>(
+      physics,
+      std::make_shared<director::PlayerDirector>(physics, 3, ground_id));
+
   auto simulator = std::make_shared<simulator::PredictorReconcilerSimulator>(
       director, physics, *initial_frame, 1.0 / 60.0, 0.250);
 
   MoveInput player_move_input;
-
-  // constexpr int kPlayerMaxJumps = 5;
-  // int player_jump_count = 0;
-  // float player_activity = 1.0f;
-  // physics.on_collision_enter(kPlayerID, [&](ObjectID other) {
-  //   if (other == ground_id) {
-  //     player_jump_count = 0;
-  //   }
-  // });
-  // physics.on_become_active(kPlayerID, [&]() { player_activity = 1.0f; });
-  // physics.on_become_inactive(kPlayerID, [&]() { player_activity = 0.0f; });
-
-  // std::vector<ObjectID> cube_ids;
-  // std::vector<float> cube_activities;
-  // constexpr float kCubeRadius = 0.2f;
-  // place_cubes(30, kCubeRadius, physics, cube_ids, cube_activities);
-
   Renderer renderer;
 
   std::vector<CubeRenderer::Instance> cube_instances{
@@ -254,6 +239,8 @@ void run(const RunOptions& options) {
 
   SDL_GL_SetSwapInterval(1);
 
+  Input input{};
+
   bool is_running = true;
   while (is_running) {
     const debug::Timer frame_timer;
@@ -262,7 +249,6 @@ void run(const RunOptions& options) {
     now = SDL_GetPerformanceCounter();
     f64 frame_delta_time = static_cast<f64>(now - previous_time) /
                            static_cast<f64>(SDL_GetPerformanceFrequency());
-    Input input{};
 
     SDL_Event event{};
     while (SDL_PollEvent(&event)) {

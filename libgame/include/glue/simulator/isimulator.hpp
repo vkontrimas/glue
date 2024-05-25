@@ -8,7 +8,7 @@ namespace glue::simulator {
 struct ISimulator {
   virtual ~ISimulator() = default;
 
-  virtual void update(f64 delta_time, const Input& input) = 0;
+  virtual void update(f64 delta_time, Input& input) = 0;
   virtual void current_world_frame(WorldFrame& frame) = 0;
 };
 }  // namespace glue::simulator

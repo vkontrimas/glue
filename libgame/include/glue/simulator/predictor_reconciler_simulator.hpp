@@ -25,22 +25,22 @@ class PredictorReconcilerSimulator final : public ISimulator {
         past_frame_{initial_frame},
         future_frame_{initial_frame} {}
 
-  virtual void update(f64 delta_time, const Input& input) override {
+  virtual void update(f64 delta_time, Input& input) override {
     auto logger = debug::NoOpDataLogger<f64>{};
     update_timed(delta_time, input, logger);
   };
 
   template <debug::CDataLogger<f64> TDataLogger = debug::NoOpDataLogger<f64>>
-  void update_timed(f64 delta_time, const Input& input, TDataLogger& logger) {
+  void update_timed(f64 delta_time, Input& input, TDataLogger& logger) {
     timestep_.update(delta_time, [&](f64 timestep) {
       debug::Timer timer;
       std::memcpy(&past_frame_, &future_frame_, sizeof(WorldFrame));
 
       future_frame_.active_cubes.clear();
 
-      director_->pre_physics(timestep, input, future_frame_, *physics_);
+      director_->pre_physics(timestep, input, future_frame_);
       physics_->step(timestep, future_frame_);
-      director_->post_physics(timestep, input, future_frame_, *physics_);
+      director_->post_physics(timestep, input, future_frame_);
       logger.log(timer.elapsed_ms<f64>());
     });
   }

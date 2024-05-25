@@ -51,7 +51,6 @@ add_library(
     libgame/src/physics/jolt_physics_engine.cpp
     libgame/src/physics/jolt_physics_backend.cpp
     libgame/src/physics/jolt_setup_globals.cpp
-    libgame/src/director/game_director.cpp
 )
 target_include_directories(game PUBLIC libgame/include)
 target_link_libraries(game PUBLIC common Jolt)
