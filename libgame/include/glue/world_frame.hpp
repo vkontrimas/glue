@@ -4,7 +4,9 @@
 #include <glue/collections/fixed_vec.hpp>
 #include <glue/physics/iphysics_engine.hpp>
 #include <glue/types.hpp>
+#include <iterator>
 #include <memory>
+#include <unordered_set>
 
 namespace glue {
 struct WorldFrame {
@@ -51,16 +53,29 @@ struct WorldFrame {
 
   static void interpolate(const WorldFrame& past, const WorldFrame& future,
                           f32 alpha, WorldFrame& out) {
+    static std::unordered_set<u16> index_set;
+
     out.camera.target =
         glm::mix(past.camera.target, future.camera.target, alpha);
+
+    index_set.clear();
     for (auto index : past.active_cubes) {
+      index_set.emplace(index);
+    }
+    for (auto index : future.active_cubes) {
+      index_set.emplace(index);
+    }
+
+    out.active_cubes.clear();
+    std::copy(std::begin(index_set), std::end(index_set),
+              std::back_inserter(out.active_cubes));
+
+    for (auto index : out.active_cubes) {
       out.cubes[index].position = glm::mix(past.cubes[index].position,
                                            future.cubes[index].position, alpha);
       out.cubes[index].rotation = glm::slerp(
           past.cubes[index].rotation, future.cubes[index].rotation, alpha);
     }
-    std::memcpy(&out.active_cubes, &past.active_cubes,
-                sizeof(out.active_cubes));
   }
 };
 }  // namespace glue
