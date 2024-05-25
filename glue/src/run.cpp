@@ -160,18 +160,32 @@ void run(const RunOptions& options) {
 
   std::vector<CubeRenderer::Instance> cube_instances{
       initial_frame->cubes.size()};
+  std::vector<u16> active_cube_instances;
+  active_cube_instances.reserve(initial_frame->cubes.size());
 
-  for (auto& instance : cube_instances) {
+  for (std::size_t i = 0; i < initial_frame->cubes.size(); ++i) {
+    const auto& cube = initial_frame->cubes[i];
+    auto& instance = cube_instances[i];
+    instance.position = cube.position;
+    instance.rotation = cube.rotation;
     instance.size = kCubeRadius;
     instance.activity = 0.0f;
   }
   cube_instances[0].size = kPlayerCubeRadius;
 
   const auto fill_instances = [&](const WorldFrame& frame) {
-    for (std::size_t i = 0; i < frame.cubes.size(); ++i) {
-      const auto& pose = frame.cubes[i];
-      cube_instances[i].position = pose.position;
-      cube_instances[i].rotation = pose.rotation;
+    for (auto index : frame.active_cubes) {
+      const auto& pose = frame.cubes[index];
+      auto& instance = cube_instances[index];
+      instance.position = pose.position;
+      instance.rotation = pose.rotation;
+      instance.activity = 1.0f;
+    }
+  };
+
+  const auto clear_activity = [&](auto vec) {
+    for (auto index : vec) {
+      cube_instances[index].activity = 0.0f;
     }
   };
 
@@ -371,8 +385,13 @@ void run(const RunOptions& options) {
     {
       const debug::Timer render_timer;
 
+      clear_activity(active_cube_instances);
       simulator->current_world_frame(*initial_frame);
       fill_instances(*initial_frame);
+      active_cube_instances.clear();
+      std::copy(std::begin(initial_frame->active_cubes),
+                std::end(initial_frame->active_cubes),
+                std::back_inserter(active_cube_instances));
 
       int render_width, render_height;
       SDL_GetWindowSizeInPixels(window.get(), &render_width, &render_height);

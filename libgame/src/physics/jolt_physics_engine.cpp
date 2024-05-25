@@ -41,6 +41,8 @@ void JoltPhysicsEngine::read_back_poses(WorldFrame& frame) {
 
     frame.cubes[index].position = to_glm(position);
     frame.cubes[index].rotation = to_glm(rotation);
+
+    frame.active_cubes.emplace_back(static_cast<u16>(index));
   }
 }
 

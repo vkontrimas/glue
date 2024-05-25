@@ -12,6 +12,7 @@ struct WorldFrame {
 
   OrbitCamera camera;
   FixedVec<Pose, kMaxCubes> cubes;
+  FixedVec<u16, kMaxCubes> active_cubes;
 
   static auto init(OrbitCamera camera, ObjectID player_id, Pose player_pose,
                    f32 player_radius, std::size_t cube_array_width,
@@ -58,12 +59,14 @@ struct WorldFrame {
                           f32 alpha, WorldFrame& out) {
     out.camera.target =
         glm::mix(past.camera.target, future.camera.target, alpha);
-    for (std::size_t i = 0; i < out.cubes.size(); ++i) {
-      out.cubes[i].position =
-          glm::mix(past.cubes[i].position, future.cubes[i].position, alpha);
-      out.cubes[i].rotation =
-          glm::slerp(past.cubes[i].rotation, future.cubes[i].rotation, alpha);
+    for (auto index : past.active_cubes) {
+      out.cubes[index].position = glm::mix(past.cubes[index].position,
+                                           future.cubes[index].position, alpha);
+      out.cubes[index].rotation = glm::slerp(
+          past.cubes[index].rotation, future.cubes[index].rotation, alpha);
     }
+    std::memcpy(&out.active_cubes, &past.active_cubes,
+                sizeof(out.active_cubes));
   }
 };
 }  // namespace glue

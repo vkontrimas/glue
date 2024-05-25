@@ -36,6 +36,8 @@ class PredictorReconcilerSimulator final : public ISimulator {
       debug::Timer timer;
       std::memcpy(&past_frame_, &future_frame_, sizeof(WorldFrame));
 
+      future_frame_.active_cubes.clear();
+
       director_->pre_physics(timestep, input, future_frame_, *physics_);
       physics_->step(timestep, future_frame_);
       director_->post_physics(timestep, input, future_frame_, *physics_);
