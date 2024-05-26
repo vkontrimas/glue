@@ -12,6 +12,7 @@ namespace glue {
 struct WorldFrame {
   static constexpr std::size_t kMaxCubes = 65536;
 
+  u32 index = 0;
   OrbitCamera camera;
   FixedVec<Pose, kMaxCubes> cubes;
   FixedVec<u16, kMaxCubes> active_cubes;
@@ -20,6 +21,7 @@ struct WorldFrame {
                    f32 player_radius, std::size_t cube_array_width,
                    f32 cube_width, physics::IPhysicsEngine& physics) {
     auto frame = std::make_unique<WorldFrame>();
+    frame->index = 0;
     frame->camera = camera;
     frame->camera.target = player_pose.position;
 
@@ -54,6 +56,8 @@ struct WorldFrame {
   static void interpolate(const WorldFrame& past, const WorldFrame& future,
                           f32 alpha, WorldFrame& out) {
     static std::unordered_set<u16> index_set;
+
+    out.index = past.index;
 
     out.camera.target =
         glm::mix(past.camera.target, future.camera.target, alpha);

@@ -58,6 +58,7 @@ class PredictorReconcilerSimulator final : public ISimulator {
       logger.log(timer.elapsed_ms<f64>());
 
       ++current_frame_;
+      future_frame.index = static_cast<u32>(current_frame_);
     });
   }
 
