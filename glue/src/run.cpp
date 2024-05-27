@@ -11,6 +11,7 @@
 
 #include "cube_renderer.hpp"
 #include "debug/data_logger.hpp"
+#include "imgui/grapher.hpp"
 #include "imgui/imgui_context.hpp"
 #include "plane_renderer.hpp"
 #include "window.hpp"
@@ -117,7 +118,8 @@ void run(const RunOptions& options) {
                               options.window_position_y, options.window_width,
                               options.window_height);
   auto gl_context = init_gl(window.get());
-  glue::imgui::ImGuiContext imgui{window.get(), gl_context.get()};
+  imgui::ImGuiContext imgui{window.get(), gl_context.get()};
+  imgui::Grapher grapher;
 
   auto physics = std::make_shared<physics::JoltPhysicsEngine>();
   const auto ground_id = ObjectID::random();
@@ -186,45 +188,9 @@ void run(const RunOptions& options) {
   debug::DataLogger<double> frame_times{kDataLogWindow};
   debug::DataLogger<double> render_times{kDataLogWindow};
   debug::DataLogger<double> physics_times{kDataLogWindow};
-
-  std::vector<double> ys_buffer, xs_buffer;
-  const auto fill_buffers = [](const debug::DataLogger<double>& data,
-                               std::vector<double>& ys,
-                               std::vector<double>& xs) {
-    const auto count = data.count();
-    if (ys.size() < count) {
-      ys.resize(count);
-    }
-    if (xs.size() < count) {
-      xs.resize(count);
-    }
-
-    for (std::size_t i = 0; i < count; ++i) {
-      const auto& entry = data[i];
-      ys[i] = entry.data;
-      xs[i] = entry.time;
-    }
-  };
-
-  constexpr f64 kYLimit = 1000.0 / 30.0;
-  double frame_logger_y_axis = kYLimit;
-  const std::array<f64, 6> horizontal_lines{{
-      1000.0,
-      1000.0 / 10,
-      1000.0 / 30,
-      1000.0 / 60,
-      1000.0 / 120,
-      1000.0 / 240,
-  }};
-  const std::array<const char*, 6> line_labels{{
-      "1",
-      "10",
-      "30",
-      "60",
-      "120",
-      "240",
-  }};
-  static_assert(horizontal_lines.size() == line_labels.size());
+  imgui::CustomTicks ticks{{1000.0, "1"},         {1000.0 / 10, "10"},
+                           {1000.0 / 30, "30"},   {1000.0 / 60, "60"},
+                           {1000.0 / 120, "120"}, {1000.0 / 240, "240"}};
 
   bool vsync = true;
 
@@ -277,53 +243,14 @@ void run(const RunOptions& options) {
                          ImGuiWindowFlags_NoNavInputs)) {
       if (ImGui::TreeNode("GameData", "%03.3lf ms (%3.0lf FPS)",
                           frame_delta_time * 1000.0, 1.0 / frame_delta_time)) {
-        if (ImPlot::BeginPlot("frame_stats", {-1, 140},
-                              ImPlotFlags_NoFrame | ImPlotFlags_NoBoxSelect |
-                                  ImPlotFlags_NoTitle | ImPlotFlags_NoMenus |
-                                  ImPlotFlags_NoMouseText)) {
-          ImPlot::SetupAxes("s", "ms",
-                            ImPlotAxisFlags_NoLabel |
-                                ImPlotAxisFlags_NoTickLabels |
-                                ImPlotAxisFlags_AutoFit,
-                            ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_LockMin);
-          ImPlot::SetupAxisFormat(ImAxis_Y1, "%g ms");
-
-          ImPlot::SetupAxisLinks(ImAxis_Y1, nullptr, &frame_logger_y_axis);
-
-          ImPlot::SetupAxesLimits(0.0, kDataLogWindow, 0.0, kYLimit);
-          ImPlot::SetupLegend(
-              ImPlotLocation_South,
-              ImPlotLegendFlags_Horizontal | ImPlotLegendFlags_Outside);
-
-          ImPlot::SetupAxis(ImAxis_Y2, nullptr,
-                            ImPlotAxisFlags_AuxDefault |
-
-                                ImPlotAxisFlags_NoMenus);
-          ImPlot::SetupAxisTicks(ImAxis_Y2, horizontal_lines.data(),
-                                 horizontal_lines.size(), line_labels.data(),
-                                 false);
-          ImPlot::SetupAxisLimits(ImAxis_Y2, 0.0, frame_logger_y_axis,
-                                  ImPlotCond_Always);
-
-          ImPlot::SetAxes(ImAxis_X1, ImAxis_Y1);
-          fill_buffers(frame_times, ys_buffer, xs_buffer);
-          ImPlot::PlotLine("total", xs_buffer.data(), ys_buffer.data(),
-                           frame_times.count());
-          ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.4f);
-          ImPlot::PlotShaded("total", xs_buffer.data(), ys_buffer.data(),
-                             frame_times.count());
-          ImPlot::PopStyleVar();
-
-          fill_buffers(physics_times, ys_buffer, xs_buffer);
-          ImPlot::PlotLine("physics", xs_buffer.data(), ys_buffer.data(),
-                           physics_times.count());
-
-          fill_buffers(render_times, ys_buffer, xs_buffer);
-          ImPlot::PlotLine("render", xs_buffer.data(), ys_buffer.data(),
-                           render_times.count());
-
-          ImPlot::EndPlot();
-        }
+        grapher.draw_graph(
+            "frame_stats", 2.0,
+            [&](imgui::GraphInterface& g) {
+              g.draw_filled("total", frame_times);
+              g.draw("physics", physics_times);
+              g.draw("render", render_times);
+            },
+            ticks);
 
         ImGui::TreePop();
         ImGui::Spacing();
