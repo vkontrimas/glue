@@ -44,14 +44,20 @@ if (GLUE_BUILD_TESTS)
 endif()
 
 # Common typedefs, header-only utilities
-add_library(network INTERFACE)
-target_include_directories(network INTERFACE libnetwork/include)
-target_compile_features(network INTERFACE cxx_std_20)
+add_library(
+    network
+    STATIC
+    libnetwork/src/network/unix_socket.cpp # TODO: conditionally add windows socket
+) 
+target_link_libraries(network PUBLIC common)
+target_include_directories(network PUBLIC libnetwork/include)
+target_compile_features(network PUBLIC cxx_std_20)
 
 if (GLUE_BUILD_TESTS) 
     add_executable(
         tests_network
         libnetwork/tests/network/test_address.cpp
+        libnetwork/tests/network/test_socket.cpp
     )
     target_link_libraries(tests_network PRIVATE common network GTest::gtest_main GTest::gmock)
 endif()
