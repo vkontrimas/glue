@@ -4,10 +4,16 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <glue/assert.hpp>
 #include <glue/network/socket.hpp>
 
 namespace glue::network {
-Socket::~Socket() { close(handle_); }
+Socket::~Socket() {
+  if (handle_) {
+    shutdown(handle_, SHUT_RDWR);
+    close(handle_);
+  }
+}
 
 std::optional<Socket> Socket::open(u16 port) {
   Socket out{socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP), port};
@@ -51,6 +57,28 @@ std::optional<Socket> Socket::open(u16 port) {
   }
 
   return {std::move(out)};
+}
+
+std::optional<Socket> Socket::open_any_port() {
+  auto maybe_socket = Socket::open(0);
+  if (!maybe_socket.has_value()) {
+    return std::nullopt;
+  }
+
+  // fill in Socket::port
+  sockaddr_in addr{};
+  u32 addr_length = sizeof(addr);
+  auto get_name_status = getsockname(
+      maybe_socket->handle_, reinterpret_cast<sockaddr*>(&addr), &addr_length);
+  if (get_name_status != 0) {
+    LOG(ERROR) << "Failed to retrieve UDP port from socket";
+    return std::nullopt;
+  }
+  glue_assert(addr_length == sizeof(addr));
+  const u16 port = ntohs(addr.sin_port);
+  maybe_socket->port_ = port;
+
+  return maybe_socket;
 }
 
 void Socket::send(const IPv4Address& address, std::span<u8> data) {

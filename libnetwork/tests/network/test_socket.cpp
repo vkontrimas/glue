@@ -82,3 +82,19 @@ TEST_F(SocketTests, GivenOpenSocket_CannotOpenSocketOnSamePort) {
   auto maybe_new_socket = Socket::open(ip_a.port());
   EXPECT_FALSE(maybe_new_socket.has_value());
 }
+
+TEST_F(SocketTests,
+       GivenSocketsWithAnyPort_SocketsAreOpenAndPortsAreDifferent) {
+  auto maybe_a = Socket::open_any_port();
+  auto maybe_b = Socket::open_any_port();
+
+  ASSERT_TRUE(maybe_a.has_value());
+  ASSERT_TRUE(maybe_b.has_value());
+  EXPECT_NE(maybe_a->port(), maybe_b->port());
+}
+
+TEST_F(SocketTests, GivenSocketWithAnyPort_PortIsNonZero) {
+  auto maybe_socket = Socket::open_any_port();
+  ASSERT_TRUE(maybe_socket.has_value());
+  EXPECT_NE(maybe_socket->port(), 0);
+}

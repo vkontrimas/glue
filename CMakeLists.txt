@@ -47,7 +47,7 @@ endif()
 add_library(
     network
     STATIC
-    libnetwork/src/network/unix_socket.cpp # TODO: conditionally add windows socket
+    libnetwork/src/network/unix_socket.cpp 
 ) 
 target_link_libraries(network PUBLIC common)
 target_include_directories(network PUBLIC libnetwork/include)
@@ -96,7 +96,7 @@ add_executable(
     glue/src/plane_renderer.cpp
 )
 target_include_directories(glue PRIVATE glue/include)
-target_link_libraries(glue common game SDL2 glad imgui implot stb_image assimp CLI11)
+target_link_libraries(glue common network game SDL2 glad imgui implot stb_image assimp CLI11)
 target_compile_features(glue PUBLIC cxx_std_20)
 
 if (APPLE)
@@ -109,6 +109,7 @@ if (GLUE_BUILD_TESTS)
     include(GoogleTest)
     gtest_discover_tests(tests_common)
     gtest_discover_tests(tests_game)
+    gtest_discover_tests(tests_network)
 endif()
 
 # Tests
