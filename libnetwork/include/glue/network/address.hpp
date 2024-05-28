@@ -9,6 +9,7 @@ inline constexpr u32 ipv4_address(u32 a, u32 b, u32 c, u32 d) noexcept {
 
 class IPv4Address final {
  public:
+  constexpr IPv4Address() noexcept : ip_{0}, port_{0} {}
   constexpr IPv4Address(u8 a, u8 b, u8 c, u8 d, u16 port)
       : ip_{ipv4_address(a, b, c, d)}, port_{port} {}
 
