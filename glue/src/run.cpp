@@ -14,6 +14,7 @@
 #include "imgui/grapher.hpp"
 #include "imgui/imgui_context.hpp"
 #include "imgui/option_slider.hpp"
+#include "limit_fps.hpp"
 #include "plane_renderer.hpp"
 #include "window.hpp"
 
@@ -314,16 +315,8 @@ void run(const RunOptions& options) {
     }
 
     const bool unlimited_frames = option_slider.last_value_selected();
-    const f64 target_timestep_ms = option_slider.selected_value() * 1000.0;
-    const int sleep_step_ms = 1;
-    const int spinlock_time_ms = 4;
-    const f64 margin_ms = 0.4;
-    while (!vsync && !unlimited_frames &&
-           frame_timer.elapsed_ms<f64>() < target_timestep_ms - margin_ms) {
-      if (target_timestep_ms - frame_timer.elapsed_ms<f64>() >
-          spinlock_time_ms) {
-        SDL_Delay(sleep_step_ms);
-      }
+    if (!unlimited_frames && !vsync) {
+      limit_fps(option_slider.selected_value() * 1000.0, frame_timer);
     }
 
     SDL_GL_SwapWindow(window.get());
