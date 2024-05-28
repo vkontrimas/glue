@@ -43,6 +43,19 @@ if (GLUE_BUILD_TESTS)
     target_link_libraries(tests_common PRIVATE common GTest::gtest_main GTest::gmock_main)
 endif()
 
+# Common typedefs, header-only utilities
+add_library(network INTERFACE)
+target_include_directories(network INTERFACE libnetwork/include)
+target_compile_features(network INTERFACE cxx_std_20)
+
+if (GLUE_BUILD_TESTS) 
+    add_executable(
+        tests_network
+        libnetwork/tests/network/test_address.cpp
+    )
+    target_link_libraries(tests_network PRIVATE common network GTest::gtest_main GTest::gmock)
+endif()
+
 # Gameplay logic
 # (for client / server)
 add_library(
