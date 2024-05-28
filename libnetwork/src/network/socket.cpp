@@ -7,11 +7,13 @@
 #include <glue/assert.hpp>
 #include <glue/network/socket.hpp>
 
+// WINDOWS: initialize socket layer once, globally
+
 namespace glue::network {
 Socket::~Socket() {
   if (handle_) {
     shutdown(handle_, SHUT_RDWR);
-    close(handle_);
+    close(handle_);  // WINDOWS: closesocket() instead
   }
 }
 

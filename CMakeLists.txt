@@ -47,7 +47,7 @@ endif()
 add_library(
     network
     STATIC
-    libnetwork/src/network/unix_socket.cpp 
+    libnetwork/src/network/socket.cpp 
 ) 
 target_link_libraries(network PUBLIC common)
 target_include_directories(network PUBLIC libnetwork/include)
