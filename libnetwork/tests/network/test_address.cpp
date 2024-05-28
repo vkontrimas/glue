@@ -23,4 +23,9 @@ TEST(IPv4AddressTests, GivenTwoIdenticalAddresses_EqualityOperatorsWork) {
   EXPECT_FALSE(b != a);
   EXPECT_TRUE(a != c);
 }
+
+TEST(IPv4AddressTests, WhenAddressLoopbackCalled_Returns127_0_0_1WithPort) {
+  auto address = IPv4Address::loopback(12345);
+  auto expected = IPv4Address{127, 0, 0, 1, 12345};
+  EXPECT_EQ(address, expected);
 }

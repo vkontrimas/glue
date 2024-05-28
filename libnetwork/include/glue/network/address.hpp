@@ -12,6 +12,10 @@ class IPv4Address final {
   constexpr IPv4Address(u8 a, u8 b, u8 c, u8 d, u16 port)
       : ip_{ipv4_address(a, b, c, d)}, port_{port} {}
 
+  static constexpr IPv4Address loopback(u16 port) noexcept {
+    return IPv4Address{127, 0, 0, 1, port};
+  }
+
   constexpr u32 ip() const noexcept { return ip_; }
   constexpr u16 port() const noexcept { return port_; }
 
