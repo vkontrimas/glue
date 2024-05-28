@@ -15,6 +15,16 @@ class IPv4Address final {
   constexpr u32 ip() const noexcept { return ip_; }
   constexpr u16 port() const noexcept { return port_; }
 
+  friend constexpr bool operator==(const IPv4Address& a,
+                                   const IPv4Address& b) noexcept {
+    return a.ip_ == b.ip_ && a.port_ == b.port_;
+  }
+
+  friend constexpr bool operator!=(const IPv4Address& a,
+                                   const IPv4Address& b) noexcept {
+    return !(a == b);
+  }
+
  private:
   u32 ip_;
   u16 port_;
