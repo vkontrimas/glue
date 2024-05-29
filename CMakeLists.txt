@@ -44,7 +44,7 @@ if (GLUE_BUILD_TESTS)
     target_link_libraries(tests_common PRIVATE common GTest::gtest_main GTest::gmock_main)
 endif()
 
-# Common typedefs, header-only utilities
+# Networking library
 add_library(
     network
     STATIC
@@ -62,6 +62,23 @@ if (GLUE_BUILD_TESTS)
         libnetwork/tests/network/test_packet.cpp
     )
     target_link_libraries(tests_network PRIVATE common network GTest::gtest_main GTest::gmock)
+endif()
+
+# Bitpacking library for compressing game data in network transmissions
+add_library(
+    bitpack
+    INTERFACE
+) 
+target_link_libraries(bitpack INTERFACE common)
+target_include_directories(bitpack INTERFACE libnetwork/include)
+target_compile_features(bitpack INTERFACE cxx_std_20)
+
+if (GLUE_BUILD_TESTS) 
+    add_executable(
+        tests_bitpack
+        libbitpack/tests/bitpack/test_bitpack.cpp
+    )
+    target_link_libraries(tests_bitpack PRIVATE common GTest::gtest_main GTest::gmock)
 endif()
 
 # Gameplay logic
