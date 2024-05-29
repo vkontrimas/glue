@@ -11,6 +11,8 @@ namespace glue::network {
 /*
  * VARIABLE SIZE class.
  *
+ * A packet that can be sent over a Connection.
+ *
  * To enable reconfiguring packet sizes at runtime for testing.
  * In prod, I'd probably have statically sized packets.
  *

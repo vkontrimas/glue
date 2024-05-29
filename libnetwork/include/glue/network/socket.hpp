@@ -8,6 +8,9 @@
 #include "detail/socket_handle.inl"
 
 namespace glue::network {
+/*
+ * A raw UDP socket with non-blocking sends and receives.
+ */
 class Socket final {
  public:
   constexpr Socket() noexcept : handle_{0}, port_{0} {}
