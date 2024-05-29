@@ -46,6 +46,8 @@ class Packet final {
     return new (start) Packet{size, index};
   }
 
+  constexpr std::span<u8> as_span() { return {begin(), end()}; }
+
   constexpr u32 size_bytes() const noexcept { return size_bytes_; }
 
   constexpr u32 index() const noexcept { return index_; }

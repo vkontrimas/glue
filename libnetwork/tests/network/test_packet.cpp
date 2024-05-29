@@ -139,3 +139,30 @@ TEST(PacketTests, GivenInitializedPacket_IteratorsWork) {
   std::iota(std::begin(*packet), std::end(*packet), 10);
   EXPECT_THAT(*packet, ElementsAre(10, 11, 12, 13, 14, 15));
 }
+
+TEST(PacketTests, GivenPacket_AsSpanGivesSpanOverData) {
+  constexpr auto kPacketSize = 6;
+  std::unique_ptr<u8[]> raw_data{new u8[Packet::alloc_size_bytes(kPacketSize)]};
+  Packet* packet = Packet::unsafe_init(raw_data.get(), kPacketSize, 121);
+
+  std::iota(std::begin(*packet), std::end(*packet), 21);
+  ASSERT_THAT(*packet, ElementsAre(21, 22, 23, 24, 25, 26));
+
+  std::span<u8> packet_span = packet->as_span();
+  EXPECT_THAT(packet_span, ElementsAre(21, 22, 23, 24, 25, 26));
+}
+
+TEST(PacketTests, GivenPacket_SpanCanBeUsedToWrite) {
+  constexpr auto kPacketSize = 6;
+  std::unique_ptr<u8[]> raw_data{new u8[Packet::alloc_size_bytes(kPacketSize)]};
+  Packet* packet = Packet::unsafe_init(raw_data.get(), kPacketSize, 121);
+
+  std::fill(std::begin(*packet), std::end(*packet), 5);
+  ASSERT_TRUE(std::all_of(std::begin(*packet), std::end(*packet),
+                          [](auto x) { return x == 5; }));
+
+  std::span<u8> packet_span = packet->as_span();
+  std::iota(std::begin(packet_span), std::end(packet_span), 21);
+  EXPECT_THAT(*packet, ElementsAre(21, 22, 23, 24, 25, 26));
+  EXPECT_THAT(packet_span, ElementsAre(21, 22, 23, 24, 25, 26));
+}
