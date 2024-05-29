@@ -44,7 +44,7 @@ class PresenceWindow final {
   constexpr u32 latest() const noexcept { return index_; }
   constexpr u32 present_flags() const noexcept { return presence_; }
 
-  void mark_present(u32 index) {
+  void mark(u32 index) {
     if (index < oldest()) {
       return;
     }

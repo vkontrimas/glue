@@ -99,18 +99,18 @@ TEST(PresenceWindowTests, CombineOverlap) {
 TEST(PresenceWindowTests, WhenMarkingIndexSmallerThanOldest_NothingHappens) {
   PresenceWindow window{100, 0};
 
-  window.mark_present(1);
+  window.mark(1);
   EXPECT_EQ(window.present_flags(), 0);
   EXPECT_EQ(window.latest(), 100);
 
-  window.mark_present(67);
+  window.mark(67);
   EXPECT_EQ(window.present_flags(), 0);
   EXPECT_EQ(window.latest(), 100);
 }
 
 TEST(PresenceWindowTests, WhenMarkingLatestIndex_NothingHappens) {
   PresenceWindow window{100, 0};
-  window.mark_present(100);
+  window.mark(100);
   EXPECT_EQ(window.present_flags(), 0);
   EXPECT_EQ(window.latest(), 100);
 }
@@ -118,15 +118,15 @@ TEST(PresenceWindowTests, WhenMarkingLatestIndex_NothingHappens) {
 TEST(PresenceWindowTests, WhenMarkingInsideCurrentWindow_SetsValues) {
   PresenceWindow window{100, 0};
 
-  window.mark_present(99);
+  window.mark(99);
   EXPECT_EQ(window.present_flags(), 0b00000000'00000000'00000000'00000001);
   EXPECT_EQ(window.latest(), 100);
 
-  window.mark_present(84);
+  window.mark(84);
   EXPECT_EQ(window.present_flags(), 0b00000000'00000000'10000000'00000001);
   EXPECT_EQ(window.latest(), 100);
 
-  window.mark_present(84);
+  window.mark(84);
   EXPECT_EQ(window.present_flags(), 0b00000000'00000000'10000000'00000001);
   EXPECT_EQ(window.latest(), 100);
 }
@@ -135,22 +135,22 @@ TEST(PresenceWindowTests, WhenMarkingInsideCurrentWindow_SetsValues) {
 TEST(PresenceWindowTests, WhenMarkingPastLatestIndex_ShiftsTheEntireRangeToIt) {
   PresenceWindow window{100, 0};
 
-  window.mark_present(99);
+  window.mark(99);
   EXPECT_EQ(window.present_flags(), 0b00000000'00000000'00000000'00000001);
   EXPECT_EQ(window.latest(), 100);
 
-  window.mark_present(110);
+  window.mark(110);
   EXPECT_EQ(window.present_flags(), 0b00000000'00000000'00000110'00000000);
   EXPECT_EQ(window.latest(), 110);
   EXPECT_EQ(window.oldest(), 78);
 
-  window.mark_present(107);
-  window.mark_present(106);
-  window.mark_present(104);
+  window.mark(107);
+  window.mark(106);
+  window.mark(104);
   EXPECT_EQ(window.present_flags(), 0b00000000'00000000'00000110'00101100);
   EXPECT_EQ(window.latest(), 110);
 
-  window.mark_present(200);
+  window.mark(200);
   LOG(INFO) << "test: " << std::bitset<32>(window.present_flags());
   EXPECT_EQ(window.present_flags(), 0);
   EXPECT_EQ(window.latest(), 200);
