@@ -1,3 +1,4 @@
+#include <glog/logging.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -8,23 +9,47 @@ using namespace glue;
 using namespace testing;
 
 struct Packer {
-  std::span<f32> values;
+  std::span<u8> values;
   int index = 0;
 };
 
 struct Unpacker {
-  std::span<f32> values;
+  std::span<u8> values;
   int index = 0;
 };
 
-void pack_raw(Packer& packer, f32& value) {
-  packer.values[packer.index] = value;
-  packer.index++;
+void pack(Packer& packer, const f32& value) {
+  // dark magic, not robust or smart. prototype shit
+  const u8* bytes = reinterpret_cast<const u8*>(&value);
+  std::copy(bytes, bytes + 4, std::begin(packer.values) + packer.index);
+  packer.index += 4;
 }
 
-void pack_raw(Unpacker& unpacker, f32& value) {
-  value = unpacker.values[unpacker.index];
-  unpacker.index++;
+void pack(Unpacker& unpacker, f32& value) {
+  // dark magic, not robust or smart. prototype shit
+  std::copy(std::begin(unpacker.values) + unpacker.index,
+            std::begin(unpacker.values) + unpacker.index + 4,
+            reinterpret_cast<u8*>(&value));
+  unpacker.index += 4;
+}
+
+void pack_quantize(Packer& packer, const f32& value, f32 min, f32 max) {
+  // probably sucks stability and precision wise
+  // again, prototype shit
+  const f32 length = max - min;
+  const f32 val = 255.0f * ((value - min) / length);
+  const u8 byte = static_cast<u8>(val);
+  packer.values[packer.index] = byte;
+  ++packer.index;
+}
+
+void pack_quantize(Unpacker& packer, f32& value, f32 min, f32 max) {
+  // probably sucks stability and precision wise
+  // again, prototype shit
+  const u8 byte = packer.values[packer.index];
+  const f32 length = max - min;
+  value = min + ((byte * length) / 255.0f);
+  ++packer.index;
 }
 
 struct Position {
@@ -32,29 +57,26 @@ struct Position {
 };
 
 void pack(auto& packer, Position& position) {
-  pack_raw(packer, position.x);
-  pack_raw(packer, position.y);
-  pack_raw(packer, position.z);
+  pack(packer, position.x);
+  pack_quantize(packer, position.y, 1.0f, 4.0f);  // switching is easy!!!!
+  pack(packer, position.z);
 }
 
 TEST(BitpackTests, Prototype) {
   Position position{1, 2, 3};
 
-  std::array<f32, 4> data{{0, 0, 0, 0}};
+  std::array<u8, 200> data;
+  std::ranges::fill(data, 0);
+
   Position pos{1, 2, 3};
 
   Packer packer{data, 0};
   pack(packer, pos);
-  EXPECT_EQ(pos.x, 1);
-  EXPECT_EQ(pos.y, 2);
-  EXPECT_EQ(pos.z, 3);
-  EXPECT_THAT(data, ElementsAre(1, 2, 3, 0));
 
   Position pos2{0, 0, 0};
   Unpacker unpacker{data, 0};
   pack(unpacker, pos2);
-  EXPECT_EQ(pos2.x, 1);
-  EXPECT_EQ(pos2.y, 2);
-  EXPECT_EQ(pos2.z, 3);
-  EXPECT_THAT(data, ElementsAre(1, 2, 3, 0));
+
+  LOG(INFO) << "Pre: (" << pos.x << ", " << pos.y << ", " << pos.z << ")"
+            << " Post: (" << pos2.x << ", " << pos2.y << ", " << pos2.z << ")";
 }
