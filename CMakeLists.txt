@@ -58,6 +58,7 @@ if (GLUE_BUILD_TESTS)
         tests_network
         libnetwork/tests/network/test_address.cpp
         libnetwork/tests/network/test_socket.cpp
+        libnetwork/tests/network/test_packet.cpp
     )
     target_link_libraries(tests_network PRIVATE common network GTest::gtest_main GTest::gmock)
 endif()
