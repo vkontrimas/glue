@@ -31,6 +31,30 @@ inline void pack(TPacker& packer, T& val) {
   val = static_cast<T>(uval);
 }
 
+template <CPacker TPacker>
+inline void pack(TPacker& packer, f32& val) {
+  // UB but how it's done in game industry afaik.
+  union {
+    f32 float_val;
+    u32 integral_val;
+  };
+  float_val = val;
+  pack(packer, integral_val);
+  val = float_val;
+}
+
+template <CPacker TPacker>
+inline void pack(TPacker& packer, f64& val) {
+  // UB but how it's done in game industry afaik.
+  union {
+    f64 float_val;
+    u64 integral_val;
+  };
+  float_val = val;
+  pack(packer, integral_val);
+  val = float_val;
+}
+
 inline void pack(Packer& packer, bool val) { packer.write_bits(val, 1); }
 inline void pack(Unpacker& packer, bool& val) { val = packer.read_bits(1); }
 }  // namespace glue::bitpack

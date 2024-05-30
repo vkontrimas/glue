@@ -75,11 +75,24 @@ constexpr TestData<i64> test_data() {
        0x0007'cd02, 0x0000'1d91, 0xdf25'6c8d, 0x7fff'ffff, 0xffff'ffff}};
 }
 
+template <>
+constexpr TestData<f32> test_data() {
+  return {{-352.125f, -121.25f, 0.0f, 121.125f, 1212.03125f},
+          {0xc3b0'1000, 0xc2f2'8000, 0, 0x42f2'4000, 0x4497'8100}};
+}
+
+template <>
+constexpr TestData<f64> test_data() {
+  return {{-452318235128.7353, 12124124.124112513, 0, 42, 7893479223892.252},
+          {0xc25a'5411, 0x227e'2f0f, 0x4167'1ffb, 0x83f8'bace, 0, 0,
+           0x4045'0000, 0, 0x429c'b760, 0x19c9'5102}};
+}
+
 template <class T>
 class BitpackTests : public ::testing::Test {};
 
 using BitpackTypes =
-    ::testing::Types<u8, u16, u32, u64, i8, i16, i32, i64, bool>;
+    ::testing::Types<u8, u16, u32, u64, i8, i16, i32, i64, f32, f64, bool>;
 TYPED_TEST_SUITE(BitpackTests, BitpackTypes);
 
 TYPED_TEST(BitpackTests, Packs) {
