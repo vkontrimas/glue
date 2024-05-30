@@ -56,6 +56,17 @@ TEST(PackerTests, WriteBitsCorrectly) {
                                 0b0000'0000'0000'0000'0000'0000'0011'0000));
 }
 
+TEST(PackerTests, Writing0OverwritesExisting1Bits) {
+  // this facilitates writes without clearing underlying data store
+  // write_bits(0) should set 0 bits correctly.
+  std::array<u32, 1> data{{0xffffffff}};
+  Packer packer{data};
+  packer.write_bits(0x0, 4);
+  packer.write_bits(0xab, 8);
+  packer.write_bits(0x0f510, 20);
+  EXPECT_THAT(data, ElementsAre(0x0ab0f510));
+}
+
 TEST(PackerTests, WriteExactly32BitsAligned) {
   std::array<u32, 1> data{{0}};
   Packer packer{data};

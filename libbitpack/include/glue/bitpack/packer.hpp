@@ -57,7 +57,9 @@ struct Packer final : public detail::BasePacker {
     const size_t space = kValueSizeBits - (current_bit() & kAlignMask);
     if (space >= count) {
       const auto shift = space - count;
-      data_[current()] |= value << shift;
+      const auto zero_mask = ~((1 << count) - 1) << shift;
+      data_[current()] &= zero_mask;       // zero-out the bits we'll write to
+      data_[current()] |= value << shift;  // write value in there
       bit_position_ += count;
     } else {
       const value_t high_value = value >> (count - space);
