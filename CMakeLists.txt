@@ -80,6 +80,7 @@ if (GLUE_BUILD_TESTS)
         libbitpack/tests/bitpack/test_bitpack.cpp
         libbitpack/tests/bitpack/test_packer.cpp
         libbitpack/tests/bitpack/test_examples.cpp
+        libbitpack/tests/bitpack/test_pack_range.cpp
         libbitpack/tests/bitpack/test_math.cpp
     )
     target_link_libraries(tests_bitpack PRIVATE common bitpack GTest::gtest_main GTest::gmock)
