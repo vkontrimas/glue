@@ -2,81 +2,75 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <glue/bitpack/bitpack.hpp>
 #include <glue/types.hpp>
 #include <span>
 
 using namespace glue;
-using namespace testing;
+using namespace glue::bitpack;
 
-struct Packer {
-  std::span<u8> values;
-  int index = 0;
+template <class T>
+struct TestData final {
+  std::vector<T> values{};
+  std::vector<u32> raw{};
 };
 
-struct Unpacker {
-  std::span<u8> values;
-  int index = 0;
-};
+template <class T>
+constexpr TestData<T> test_data();
 
-void pack(Packer& packer, const f32& value) {
-  // dark magic, not robust or smart. prototype shit
-  const u8* bytes = reinterpret_cast<const u8*>(&value);
-  std::copy(bytes, bytes + 4, std::begin(packer.values) + packer.index);
-  packer.index += 4;
+template <>
+constexpr TestData<bool> test_data() {
+  return {{true, false, true, true, false, false, true, false, true},
+          {0b10110010'10000000'00000000'00000000}};
 }
 
-void pack(Unpacker& unpacker, f32& value) {
-  // dark magic, not robust or smart. prototype shit
-  std::copy(std::begin(unpacker.values) + unpacker.index,
-            std::begin(unpacker.values) + unpacker.index + 4,
-            reinterpret_cast<u8*>(&value));
-  unpacker.index += 4;
+template <>
+constexpr TestData<u8> test_data() {
+  return {{1, 2, 10, 128, 255}, {0x0102'0a80, 0xff00'0000}};
 }
 
-void pack_quantize(Packer& packer, const f32& value, f32 min, f32 max) {
-  // probably sucks stability and precision wise
-  // again, prototype shit
-  const f32 length = max - min;
-  const f32 val = 255.0f * ((value - min) / length);
-  const u8 byte = static_cast<u8>(val);
-  packer.values[packer.index] = byte;
-  ++packer.index;
+template <>
+constexpr TestData<u16> test_data() {
+  return {{1, 10, 255, 2048, 65535}, {0x0001'000a, 0x00ff'0800, 0xffff'0000}};
 }
 
-void pack_quantize(Unpacker& packer, f32& value, f32 min, f32 max) {
-  // probably sucks stability and precision wise
-  // again, prototype shit
-  const u8 byte = packer.values[packer.index];
-  const f32 length = max - min;
-  value = min + ((byte * length) / 255.0f);
-  ++packer.index;
+template <>
+constexpr TestData<u32> test_data() {
+  return {{1, 10, 255, 2048, 65535, 5123512, 4294967295},
+          {1, 10, 255, 2048, 65535, 5123512, 4294967295}};
 }
 
-struct Position {
-  f32 x, y, z;
-};
+template <class T>
+class BitpackTests : public ::testing::Test {};
 
-void pack(auto& packer, Position& position) {
-  pack(packer, position.x);
-  pack_quantize(packer, position.y, 1.0f, 4.0f);  // switching is easy!!!!
-  pack(packer, position.z);
+using BitpackTypes = ::testing::Types<u8, u16, bool>;
+TYPED_TEST_SUITE(BitpackTests, BitpackTypes);
+
+TYPED_TEST(BitpackTests, Packs) {
+  const auto data = test_data<TypeParam>();
+
+  std::vector<u32> buffer;
+  buffer.resize(data.raw.size(), 0);
+  Packer packer{buffer};
+
+  for (const auto& val : data.values) {
+    pack(packer, val);
+  }
+
+  EXPECT_THAT(buffer, ::testing::ContainerEq(data.raw));
 }
 
-TEST(BitpackTests, Prototype) {
-  Position position{1, 2, 3};
+TYPED_TEST(BitpackTests, Unpacks) {
+  auto data = test_data<TypeParam>();
+  Unpacker unpacker{data.raw};
 
-  std::array<u8, 200> data;
-  std::ranges::fill(data, 0);
+  std::vector<TypeParam> result;
+  result.reserve(data.values.size());
+  for (const auto& _ : data.values) {
+    TypeParam val{};
+    pack(unpacker, val);
+    result.emplace_back(val);
+  }
 
-  Position pos{1, 2, 3};
-
-  Packer packer{data, 0};
-  pack(packer, pos);
-
-  Position pos2{0, 0, 0};
-  Unpacker unpacker{data, 0};
-  pack(unpacker, pos2);
-
-  LOG(INFO) << "Pre: (" << pos.x << ", " << pos.y << ", " << pos.z << ")"
-            << " Post: (" << pos2.x << ", " << pos2.y << ", " << pos2.z << ")";
+  EXPECT_THAT(result, ::testing::ContainerEq(data.values));
 }
