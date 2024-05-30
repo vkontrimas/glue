@@ -49,9 +49,9 @@ struct Packer final : public detail::BasePacker {
    */
   constexpr void write_bits(value_t value, size_t count) {
     glue_assert(count <= kValueSizeBits);
-    glue_assert(current_bit() + count < capacity_bits());
+    glue_assert(current_bit() + count <= capacity_bits());
 
-    value &= static_cast<value_t>((1 << count) - 1);
+    value &= static_cast<value_t>((1ull << count) - 1);
 
     constexpr auto kAlignMask = kValueSizeBits - 1;
     const size_t space = kValueSizeBits - (current_bit() & kAlignMask);
@@ -77,9 +77,9 @@ struct Unpacker final : public detail::BasePacker {
    */
   constexpr value_t read_bits(size_t count) {
     glue_assert(count <= kValueSizeBits);
-    glue_assert(current_bit() + count < capacity_bits());
+    glue_assert(current_bit() + count <= capacity_bits());
 
-    const value_t value_mask = static_cast<value_t>((1 << count) - 1);
+    const value_t value_mask = static_cast<value_t>((1ull << count) - 1);
 
     constexpr auto kAlignMask = kValueSizeBits - 1;
     const size_t space = kValueSizeBits - (current_bit() & kAlignMask);
