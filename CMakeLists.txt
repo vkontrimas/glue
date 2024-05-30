@@ -70,15 +70,16 @@ add_library(
     INTERFACE
 ) 
 target_link_libraries(bitpack INTERFACE common)
-target_include_directories(bitpack INTERFACE libnetwork/include)
+target_include_directories(bitpack INTERFACE libbitpack/include)
 target_compile_features(bitpack INTERFACE cxx_std_20)
 
 if (GLUE_BUILD_TESTS) 
     add_executable(
         tests_bitpack
         libbitpack/tests/bitpack/test_bitpack.cpp
+        libbitpack/tests/bitpack/test_packer.cpp
     )
-    target_link_libraries(tests_bitpack PRIVATE common GTest::gtest_main GTest::gmock)
+    target_link_libraries(tests_bitpack PRIVATE common bitpack GTest::gtest_main GTest::gmock)
 endif()
 
 # Gameplay logic
@@ -129,6 +130,7 @@ if (GLUE_BUILD_TESTS)
     gtest_discover_tests(tests_common)
     gtest_discover_tests(tests_game)
     gtest_discover_tests(tests_network)
+    gtest_discover_tests(tests_bitpack)
 endif()
 
 # Tests
