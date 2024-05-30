@@ -40,10 +40,18 @@ constexpr TestData<u32> test_data() {
           {1, 10, 255, 2048, 65535, 5123512, 4294967295}};
 }
 
+template <>
+constexpr TestData<u64> test_data() {
+  return {{1, 10, 255, 2048, 65535, 5123512, 4294967295, 53125123512ull,
+           18446744073709551615ull},
+          {0, 1, 0, 10, 0, 255, 0, 2048, 0, 65535, 0, 5123512, 0, 4294967295,
+           0xc, 0x5e810db8, 0xffffffff, 0xffffffff}};
+}
+
 template <class T>
 class BitpackTests : public ::testing::Test {};
 
-using BitpackTypes = ::testing::Types<u8, u16, bool>;
+using BitpackTypes = ::testing::Types<u8, u16, u32, u64, bool>;
 TYPED_TEST_SUITE(BitpackTests, BitpackTypes);
 
 TYPED_TEST(BitpackTests, Packs) {
@@ -53,7 +61,7 @@ TYPED_TEST(BitpackTests, Packs) {
   buffer.resize(data.raw.size(), 0);
   Packer packer{buffer};
 
-  for (const auto& val : data.values) {
+  for (TypeParam val : data.values) {
     pack(packer, val);
   }
 
