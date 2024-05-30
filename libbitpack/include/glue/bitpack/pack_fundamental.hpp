@@ -67,10 +67,12 @@ inline constexpr void pack(TPacker& packer, f64& val) {
   val = float_val;
 }
 
-inline void constexpr pack(Packer& packer, bool val) {
+inline bool constexpr pack(Packer& packer, bool val) {
   packer.write_bits(val, 1);
+  return val;
 }
-inline void constexpr pack(Unpacker& packer, bool& val) {
+inline bool constexpr pack(Unpacker& packer, bool& val) {
   val = packer.read_bits(1);
+  return val;
 }
 }  // namespace glue::bitpack
