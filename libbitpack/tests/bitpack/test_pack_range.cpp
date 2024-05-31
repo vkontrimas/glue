@@ -19,16 +19,44 @@ TEST(BitpackRangeDeathTests, WhenMoreThan32BitsNeeded_Dies) {
 
   EXPECT_DEATH(pack_range_checked(packer, value, 0ull, 2131241257812681275ull),
                "Assertion.*");
-  EXPECT_DEATH(pack_range_checked(unpacker, value, 0ull, 11241247865178651237ull),
-               "Assertion.*");
+  EXPECT_DEATH(
+      pack_range_checked(unpacker, value, 0ull, 11241247865178651237ull),
+      "Assertion.*");
 
   i64 signed_value;
-  EXPECT_DEATH(
-      pack_range_checked(packer, signed_value, -189751571892375ll, 123512512351235ll),
-      "Assertion.*");
-  EXPECT_DEATH(pack_range_checked(unpacker, signed_value, -1247829752892372ll,
-                          1512356782627823ll),
+  EXPECT_DEATH(pack_range_checked(packer, signed_value, -189751571892375ll,
+                                  123512512351235ll),
                "Assertion.*");
+  EXPECT_DEATH(pack_range_checked(unpacker, signed_value, -1247829752892372ll,
+                                  1512356782627823ll),
+               "Assertion.*");
+}
+
+TEST(BitpackRangeDeathTests, WhenBeforeBegin_Dies) {
+  i64 value = -10;
+  std::array<u32, 10> data;
+  Packer packer{data};
+  Packer unpacker{data};
+
+  EXPECT_DEATH(pack_range_checked(packer, value, 0, 10), "Assertion.*");
+}
+
+TEST(BitpackRangeDeathTests, WhenAtEnd_Dies) {
+  i64 value = 10;
+  std::array<u32, 10> data;
+  Packer packer{data};
+  Packer unpacker{data};
+
+  EXPECT_DEATH(pack_range_checked(packer, value, 0, 10), "Assertion.*");
+}
+
+TEST(BitpackRangeDeathTests, WhenAfterEnd_Dies) {
+  i64 value = 2352;
+  std::array<u32, 10> data;
+  Packer packer{data};
+  Packer unpacker{data};
+
+  EXPECT_DEATH(pack_range_checked(packer, value, 0, 10), "Assertion.*");
 }
 
 TEST(BitpackRangeTests, PackValues) {
@@ -47,7 +75,8 @@ TEST(BitpackRangeTests, PackValues) {
   EXPECT_THAT(data, ElementsAre(0b001011'0010111011'000111100001'0000, 0));
 
   i64 value_long = -1000000000000000004;
-  pack_range_checked(packer, value_long, -1000000000000000015, -1000000000000000000);
+  pack_range_checked(packer, value_long, -1000000000000000015,
+                     -1000000000000000000);
   EXPECT_THAT(data, ElementsAre(0b001011'0010111011'000111100001'1011, 0));
 }
 
@@ -67,6 +96,7 @@ TEST(BitpackRangeTests, UnpackValues) {
   EXPECT_EQ(value_int, -1519);
 
   i64 value_long{0};
-  pack_range_checked(unpacker, value_long, -1000000000000000015, -1000000000000000000);
+  pack_range_checked(unpacker, value_long, -1000000000000000015,
+                     -1000000000000000000);
   EXPECT_EQ(value_long, -1000000000000000004);
 }
