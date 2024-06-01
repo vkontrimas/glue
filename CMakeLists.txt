@@ -41,6 +41,7 @@ if (GLUE_BUILD_TESTS)
         libcommon/tests/collections/test_circular_buffer.cpp
         libcommon/tests/test_presence_window.cpp
         libcommon/tests/test_math.cpp
+        libcommon/tests/test_pointers.cpp
     )
     target_link_libraries(tests_common PRIVATE common GTest::gtest_main GTest::gmock_main)
 endif()
