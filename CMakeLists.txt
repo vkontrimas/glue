@@ -83,6 +83,7 @@ if (GLUE_BUILD_TESTS)
         libbitpack/tests/bitpack/test_pack_range.cpp
         libbitpack/tests/bitpack/test_math.cpp
         libbitpack/tests/bitpack/test_pack_bits.cpp
+        libbitpack/tests/bitpack/test_pack_quantize.cpp
     )
     target_link_libraries(tests_bitpack PRIVATE common bitpack GTest::gtest_main GTest::gmock)
 endif()
