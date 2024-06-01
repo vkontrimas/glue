@@ -2,12 +2,27 @@
 
 #include <algorithm>
 #include <glue/assert.hpp>
+#include <glue/bitpack/bitpack.hpp>
 #include <glue/pointers.hpp>
 #include <glue/types.hpp>
 #include <span>
 #include <type_traits>
 
 namespace glue::network {
+struct PacketHeader final {
+  // drop indices to less bits.
+  u32 index;
+  u32 receipt_index;
+  u32 receipt_flags;
+};
+
+template <bitpack::CPacker T>
+inline constexpr void pack(T& packer, PacketHeader& header) {
+  pack(packer, header.index);
+  pack(packer, header.receipt_index);
+  pack(packer, header.receipt_flags);
+}
+
 /*
  * VARIABLE SIZE class.
  *
@@ -43,16 +58,40 @@ class Packet final {
     return aligned_size;
   }
 
-  static Packet* unsafe_init(u8* start, u32 size, u32 index) {
+  static Packet* unsafe_init(u8* start, u32 size, const PacketHeader& header) {
     glue_assert(ptr_is_aligned(start, kAlignment));
-    return new (start) Packet{size, index};
+    return new (start) Packet{size, header};
+  }
+
+  template <std::invocable<bitpack::Packer&> Fn>
+  constexpr void pack(Fn pack_fn) {
+    bitpack::Packer packer{as_u32_span()};
+    network::pack(packer, header_);
+    pack_fn(packer);
+  }
+
+  template <std::invocable<bitpack::Unpacker&> Fn>
+  constexpr void unpack(Fn pack_fn) {
+    bitpack::Unpacker unpacker{as_u32_span()};
+    network::pack(unpacker, header_);
+    pack_fn(unpacker);
   }
 
   constexpr std::span<u8> as_span() { return {begin(), end()}; }
 
+  std::span<u32> as_u32_span() {
+    // safety tests needed
+    return {
+        reinterpret_cast<u32*>(begin()),
+        reinterpret_cast<u32*>(begin()) + (size_bytes() / sizeof(u32)),
+    };
+  }
+
   constexpr u32 size_bytes() const noexcept { return size_bytes_; }
 
-  constexpr u32 index() const noexcept { return index_; }
+  constexpr u32 index() const noexcept { return header_.index; }
+  constexpr u32 receipt_index() const noexcept { return header_.receipt_index; }
+  constexpr u32 receipt_flags() const noexcept { return header_.receipt_flags; }
 
   constexpr u8* data() noexcept { return data_; }
   constexpr const u8* data() const noexcept { return data_; }
@@ -69,14 +108,14 @@ class Packet final {
  private:
   static constexpr u32 kDefaultDataSize = sizeof(u32);
 
-  constexpr Packet(u32 size_bytes, u32 index) noexcept
-      : size_bytes_{size_bytes}, index_{index} {}
+  constexpr Packet(u32 size_bytes, PacketHeader header) noexcept
+      : size_bytes_{size_bytes}, header_{header} {}
 
  private:
   u32 size_bytes_;
-  u32 index_;
+  PacketHeader header_;
 
-  u8 data_[kDefaultDataSize];
+  alignas(u32) u8 data_[kDefaultDataSize];
 };
 
 static_assert(sizeof(Packet) == Packet::alloc_size_bytes(0));

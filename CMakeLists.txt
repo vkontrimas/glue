@@ -46,26 +46,6 @@ if (GLUE_BUILD_TESTS)
     target_link_libraries(tests_common PRIVATE common GTest::gtest_main GTest::gmock_main)
 endif()
 
-# Networking library
-add_library(
-    network
-    STATIC
-    libnetwork/src/network/socket.cpp 
-) 
-target_link_libraries(network PUBLIC common)
-target_include_directories(network PUBLIC libnetwork/include)
-target_compile_features(network PUBLIC cxx_std_20)
-
-if (GLUE_BUILD_TESTS) 
-    add_executable(
-        tests_network
-        libnetwork/tests/network/test_address.cpp
-        libnetwork/tests/network/test_socket.cpp
-        libnetwork/tests/network/test_packet.cpp
-    )
-    target_link_libraries(tests_network PRIVATE common network GTest::gtest_main GTest::gmock)
-endif()
-
 # Bitpacking library for compressing game data in network transmissions
 add_library(
     bitpack
@@ -87,6 +67,28 @@ if (GLUE_BUILD_TESTS)
         libbitpack/tests/bitpack/test_pack_quantize.cpp
     )
     target_link_libraries(tests_bitpack PRIVATE common bitpack GTest::gtest_main GTest::gmock)
+endif()
+
+# Networking library
+add_library(
+    network
+    STATIC
+    libnetwork/src/network/socket.cpp 
+) 
+target_link_libraries(network PUBLIC common bitpack)
+target_include_directories(network PUBLIC libnetwork/include)
+target_compile_features(network PUBLIC cxx_std_20)
+
+if (GLUE_BUILD_TESTS) 
+    add_executable(
+        tests_network
+        libnetwork/tests/network/test_address.cpp
+        libnetwork/tests/network/test_socket.cpp
+        libnetwork/tests/network/test_packet.cpp
+        libnetwork/tests/network/test_packet_packing.cpp
+        libnetwork/tests/network/test_connection.cpp
+    )
+    target_link_libraries(tests_network PRIVATE common network GTest::gtest_main GTest::gmock)
 endif()
 
 # Gameplay logic
