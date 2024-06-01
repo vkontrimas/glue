@@ -1,8 +1,5 @@
 #pragma once
 
-#include <glog/logging.h>
-
-#include <bitset>
 #include <concepts>
 #include <cstdint>
 
